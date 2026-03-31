@@ -95,6 +95,77 @@ body {
   transform: scale(0.92);
 }
 
+#locateBtn {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+#locateBtn:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+#speakBtn {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+#speakBtn:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+#speakBtn:active {
+  transform: scale(0.92);
+}
+
+#refreshBtn {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+#refreshBtn:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+#refreshBtn:active {
+  transform: scale(0.92);
+}
+
+#refreshBtn.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* ===== 天气信息 ===== */
 .weather-info {
   position: relative;
