@@ -15,30 +15,55 @@ let particles = [];
 let weatherType = 'default';
 let lastWeather = '';
 
-// ============ 天气数据获取 ============
+// ============ 天气数据获取（Open-Meteo）============
+
+const WMO_DESC = {
+  0: '晴朗', 1: '晴间多云', 2: '多云', 3: '阴天',
+  45: '雾', 48: '霜雾',
+  51: '小毛毛雨', 53: '中毛毛雨', 55: '大毛毛雨',
+  56: '冻毛毛雨', 57: '强冻毛毛雨',
+  61: '小雨', 63: '中雨', 65: '大雨',
+  66: '冻雨', 67: '强冻雨',
+  71: '小雪', 73: '中雪', 75: '大雪',
+  77: '雪粒',
+  80: '阵雨', 81: '中阵雨', 82: '强阵雨',
+  85: '阵雪', 86: '强阵雪',
+  95: '雷暴', 96: '雷暴+小冰雹', 99: '雷暴+大冰雹'
+};
 
 async function fetchWeather(location) {
   try {
-    const res = await fetch(`https://wttr.in/${encodeURIComponent(location)}?format=j1`);
-    const data = await res.json();
+    // 1. 城市名 → 经纬度
+    const geoRes = await fetch(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=zh`
+    );
+    const geoData = await geoRes.json();
+    if (!geoData.results || geoData.results.length === 0) {
+      showError('找不到这个城市，换个名字试试？');
+      return false;
+    }
+    const { latitude, longitude, name, country } = geoData.results[0];
 
-    const current = data.current_condition[0];
-    const tempC = current.temp_C;
-    const weatherCode = current.weatherCode;
-    const desc = current.lang_zh[0].value;
-    const cityName = data.nearest_area?.[0]?.area?.[0]?.value || location;
+    // 2. 获取天气
+    const weatherRes = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&timezone=auto&language=zh`
+    );
+    const weatherData = await weatherRes.json();
+    const current = weatherData.current;
+    const tempC = Math.round(current.temperature_2m);
+    const code = current.weather_code;
 
     tempEl.textContent = `${tempC}°`;
-    descEl.textContent = desc;
-    cityEl.textContent = cityName;
+    descEl.textContent = WMO_DESC[code] || '未知';
+    cityEl.textContent = `${name}, ${country}`;
 
     const now = new Date();
     updateTimeEl.textContent = `更新 ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    updateWeather(weatherCode, tempC);
+    updateWeather(code, tempC);
     return true;
   } catch (e) {
-    showError('获取天气失败，请检查城市名');
+    showError('获取天气失败');
     return false;
   }
 }
@@ -51,33 +76,23 @@ function showError(msg) {
   setTimeout(() => el.remove(), 3000);
 }
 
-// ============ 天气码映射 ============
+// ============ 天气码映射（Open-Meteo WMO）============
 
 function updateWeather(code, temp) {
-  const c = parseInt(code);
-
-  // 天气码对应关系（wttr.in 格式）
-  if ([1063, 1066, 1069, 1072, 1114, 1117, 1204, 1207, 1210, 1213, 1216, 1219, 1222, 1225, 1237, 1240, 1243, 1246, 1249, 1252, 1255, 1258, 1261, 1264, 1273, 1276, 1279, 1282].includes(c)) {
-    // 各种降水
-    if ([1087, 1273, 1276, 1279, 1282].includes(c)) {
-      setWeather('thunder', temp);
-    } else if ([1066, 1069, 1114, 1117, 1204, 1210, 1216, 1222, 1225, 1237, 1249, 1252, 1255, 1258, 1261, 1264].includes(c)) {
-      setWeather('snow', temp);
-    } else {
-      setWeather('rain', temp);
-    }
-  } else if ([1000, 1135].includes(c)) {
-    // 晴天看时间（1000=Clear, 1135=Sunny in wttr.in）
-    const hour = new Date().getHours();
-    if (hour >= 6 && hour < 19) {
-      setWeather('sunny', temp);
-    } else {
-      setWeather('clear-night', temp);
-    }
-  } else if ([1003, 1006, 1009, 1030].includes(c)) {
-    setWeather('cloudy', temp);
-  } else if ([1135, 1147].includes(c)) {
+  // WMO code: https://open-meteo.com/en/docs
+  if ([95, 96, 99].includes(code)) {
+    setWeather('thunder', temp);
+  } else if ([71, 73, 75, 77, 85, 86].includes(code)) {
+    setWeather('snow', temp);
+  } else if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) {
+    setWeather('rain', temp);
+  } else if ([45, 48].includes(code)) {
     setWeather('fog', temp);
+  } else if ([2, 3].includes(code)) {
+    setWeather('cloudy', temp);
+  } else if ([0, 1].includes(code)) {
+    const hour = new Date().getHours();
+    setWeather(hour >= 6 && hour < 19 ? 'sunny' : 'clear-night', temp);
   } else {
     setWeather('default', temp);
   }
