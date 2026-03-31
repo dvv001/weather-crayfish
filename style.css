@@ -15,10 +15,8 @@
   --bg-sunny: #4a90c2;
   --bg-cloudy: #4a5568;
   --bg-thunder: #2d2d4a;
-  --crayfish-red: #e74c3c;
-  --crayfish-dark: #c0392b;
-  --crayfish-light: #ff6b6b;
   --accent: #f39c12;
+  --pink: #ff69b4;
 }
 
 body {
@@ -124,333 +122,182 @@ body {
   opacity: 0.6;
 }
 
-/* ===== 小龙虾 ===== */
-.crayfish {
+/* ===== 角色区域 ===== */
+.character {
   position: relative;
   z-index: 10;
   margin-top: auto;
-  margin-bottom: 80px;
+  margin-bottom: 60px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  animation: float 3s ease-in-out infinite;
+  animation: charFloat 3s ease-in-out infinite;
+}
+
+@keyframes charFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+.char-img {
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
   transition: transform 0.3s;
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-.cf-body {
-  position: relative;
-  width: 120px;
-  height: 140px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* 头 */
-.cf-head {
-  width: 60px;
-  height: 45px;
-  background: var(--crayfish-red);
-  border-radius: 50% 50% 40% 40%;
-  position: relative;
-  z-index: 3;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  box-shadow: inset -4px -4px 12px rgba(0,0,0,0.2), inset 2px 2px 8px rgba(255,255,255,0.15);
-}
-
-/* 眼睛 */
-.cf-eye {
-  width: 12px;
-  height: 14px;
-  background: #fff;
-  border-radius: 50%;
-  position: relative;
-  top: -8px;
-}
-
-.cf-eye::after {
-  content: '';
+/* ===== 道具 ===== */
+.char-props {
   position: absolute;
-  width: 6px;
-  height: 6px;
-  background: #1a1a2e;
-  border-radius: 50%;
-  top: 4px;
-  left: 3px;
-  animation: blink 4s infinite;
-}
-
-@keyframes blink {
-  0%, 96%, 100% { transform: scaleY(1); }
-  98% { transform: scaleY(0.1); }
-}
-
-/* 嘴巴 */
-.cf-mouth {
-  position: absolute;
-  bottom: 8px;
-  width: 10px;
-  height: 5px;
-  background: #c0392b;
-  border-radius: 0 0 10px 10px;
-}
-
-/* 虾身 */
-.cf-torso {
-  width: 50px;
-  height: 50px;
-  background: var(--crayfish-red);
-  border-radius: 8px;
-  margin-top: -5px;
-  z-index: 2;
-  box-shadow: inset -4px -4px 12px rgba(0,0,0,0.2), inset 2px 2px 8px rgba(255,255,255,0.15);
-  background: linear-gradient(135deg, var(--crayfish-light) 0%, var(--crayfish-red) 50%, var(--crayfish-dark) 100%);
-}
-
-/* 虾壳纹理 */
-.cf-torso::before {
-  content: '';
-  position: absolute;
-  top: 50%;
+  top: 0;
   left: 50%;
-  transform: translate(-50%, -50%);
-  width: 30px;
-  height: 30px;
-  border: 2px solid rgba(255,255,255,0.1);
-  border-radius: 4px;
-}
-
-/* 大钳子 */
-.cf-claw {
-  position: absolute;
-  top: 30px;
-  z-index: 1;
-}
-
-.cf-claw-l { left: -20px; transform: rotate(-20deg); }
-.cf-claw-r { right: -20px; transform: rotate(20deg); }
-
-.claw-arm {
-  width: 30px;
-  height: 14px;
-  background: var(--crayfish-red);
-  border-radius: 20px;
-  box-shadow: inset -2px -2px 6px rgba(0,0,0,0.2);
-}
-
-.claw-pincer {
-  width: 22px;
-  height: 22px;
-  background: var(--crayfish-dark);
-  border-radius: 0 50% 50% 50%;
-  margin-top: -2px;
-  box-shadow: inset -2px -2px 6px rgba(0,0,0,0.3);
-}
-
-.cf-claw-l .claw-pincer { transform: rotate(-45deg); }
-.cf-claw-r .claw-pincer { transform: rotate(45deg); }
-
-/* 小脚 */
-.cf-legs {
-  display: flex;
-  gap: 6px;
-  margin-top: -2px;
-  z-index: 1;
-}
-
-.cf-leg {
-  width: 8px;
-  height: 18px;
-  background: var(--crayfish-dark);
-  border-radius: 4px;
-  animation: legMove 1.5s ease-in-out infinite;
-}
-
-.cf-leg:nth-child(2) { animation-delay: 0.2s; }
-.cf-leg:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes legMove {
-  0%, 100% { transform: rotate(-5deg); }
-  50% { transform: rotate(5deg); }
-}
-
-/* 尾巴 */
-.cf-tail {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: -4px;
-}
-
-.tail-segment {
-  width: 40px;
-  height: 14px;
-  background: var(--crayfish-red);
-  border-radius: 0 0 50% 50%;
-  margin-top: -2px;
-  box-shadow: inset -2px -2px 6px rgba(0,0,0,0.15);
-}
-
-.tail-segment:first-child {
-  width: 44px;
-  border-radius: 0 0 30% 30%;
-}
-
-.tail-flipper {
-  width: 36px;
-  height: 20px;
-  background: var(--crayfish-dark);
-  border-radius: 0 0 50% 50%;
-  margin-top: -2px;
-  animation: tailWag 2s ease-in-out infinite;
-}
-
-@keyframes tailWag {
-  0%, 100% { transform: rotate(0deg) scaleX(1); }
-  25% { transform: rotate(-8deg) scaleX(1.05); }
-  75% { transform: rotate(8deg) scaleX(1.05); }
-}
-
-/* ===== 情绪道具 ===== */
-.cf-umbrella,
-.cf-sunscreen,
-.cf-tear {
-  position: absolute;
-  top: -10px;
-  font-size: 36px;
-  opacity: 0;
-  transform: scale(0) rotate(-20deg);
-  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: translateX(-50%);
+  width: 220px;
+  height: 220px;
   pointer-events: none;
 }
 
-.cf-umbrella { right: -30px; }
-.cf-sunscreen { left: -30px; }
-.cf-tear { left: -25px; top: 10px; }
+.prop {
+  position: absolute;
+  font-size: 42px;
+  opacity: 0;
+  transform: scale(0) rotate(-20deg);
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
 
-/* 雨天 - 撑伞 */
-.crayfish.rain .cf-umbrella {
+/* 雨伞 - 右边 */
+.prop-rain { top: 10px; right: -20px; }
+
+/* 防晒霜 - 左边 */
+.prop-sunscreen { top: 20px; left: -15px; }
+
+/* 雷暴害怕 - 头顶 */
+.prop-thunder { top: -20px; left: 50%; transform: translateX(-50%) scale(0) rotate(0deg); font-size: 50px; }
+
+/* 雪/冷 - 右边 */
+.prop-snow { top: 30px; right: -10px; }
+
+/* 眼泪 - 左边 */
+.prop-tear { top: 60px; left: -20px; }
+
+/* 太阳镜 - 头顶 */
+.prop-sunglasses { top: -15px; left: 50%; transform: translateX(-50%) scale(0); }
+
+/* ===== 语音气泡 ===== */
+.speech-bubble {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  background: rgba(255,255,255,0.95);
+  color: #333;
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-bottom-color: rgba(255,255,255,0.95);
+}
+
+.speech-bubble.show {
   opacity: 1;
-  transform: scale(1) rotate(10deg);
-  animation: umbrellaShake 2s ease-in-out infinite;
+  transform: translateX(-50%) scale(1);
+  bottom: -30px;
 }
 
-@keyframes umbrellaShake {
-  0%, 100% { transform: scale(1) rotate(10deg); }
-  50% { transform: scale(1) rotate(15deg); }
+/* ===== 天气状态动画 ===== */
+
+/* 雨天 */
+body.bg-rain .character { animation: charFloat 3s ease-in-out infinite, rainShake 2s ease-in-out infinite; }
+body.bg-rain .prop-rain { opacity: 1; transform: scale(1) rotate(15deg); }
+body.bg-rain .char-img { transform: rotate(-5deg) scale(1.05); }
+
+@keyframes rainShake {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  30% { transform: translateY(-5px) rotate(-3deg); }
+  60% { transform: translateY(0) rotate(3deg); }
 }
 
-/* 晴天 - 防晒 */
-.crayfish.sunny .cf-sunscreen {
-  opacity: 1;
-  transform: scale(1) rotate(-10deg);
-  animation: sunscreenWave 1.5s ease-in-out infinite;
+/* 雷暴 */
+body.bg-thunder .character { animation: thunderShake 0.4s ease-in-out infinite; }
+body.bg-thunder .prop-thunder { opacity: 1; transform: translateX(-50%) scale(1); }
+body.bg-thunder .char-img { filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4)) brightness(0.9); }
+
+@keyframes thunderShake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  20% { transform: translateX(-10px) rotate(-4deg); }
+  40% { transform: translateX(10px) rotate(4deg); }
+  60% { transform: translateX(-8px) rotate(-3deg); }
+  80% { transform: translateX(8px) rotate(3deg); }
 }
 
-@keyframes sunscreenWave {
-  0%, 100% { transform: scale(1) rotate(-10deg); }
-  50% { transform: scale(1.1) rotate(-5deg); }
+/* 晴天 */
+body.bg-sunny .character { animation: sunnyBounce 1.5s ease-in-out infinite; }
+body.bg-sunny .prop-sunscreen { opacity: 1; transform: scale(1) rotate(-10deg); }
+body.bg-sunny .prop-sunglasses { opacity: 1; transform: translateX(-50%) scale(1); }
+body.bg-sunny .char-img { filter: drop-shadow(0 10px 20px rgba(255,180,0,0.3)) saturate(1.2); }
+
+@keyframes sunnyBounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-18px) scale(1.08); }
 }
 
-/* 阴天 - 流泪 */
-.crayfish.cloudy .cf-tear {
-  opacity: 1;
-  transform: scale(1) rotate(0deg);
-  animation: tearDrop 2s ease-in-out infinite;
+/* 阴天 */
+body.bg-cloudy .character { animation: cloudySway 4s ease-in-out infinite; }
+body.bg-cloudy .prop-tear { opacity: 1; transform: scale(1); animation: tearDrop 2s ease-in-out infinite; }
+body.bg-cloudy .char-img { filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4)) saturate(0.7); }
+
+@keyframes cloudySway {
+  0%, 100% { transform: translateX(0); }
+  30% { transform: translateX(-5px); }
+  70% { transform: translateX(5px); }
 }
 
 @keyframes tearDrop {
   0%, 60%, 100% { transform: scale(1) translateY(0); }
-  30% { transform: scale(1.2) translateY(3px); }
+  30% { transform: scale(1.2) translateY(5px); }
 }
 
-/* 雷暴 - 害怕 */
-.crayfish.thunder {
-  animation: thunderShake 0.3s ease-in-out infinite;
+/* 雪天 */
+body.bg-snow .character { animation: coldShiver 0.8s ease-in-out infinite; }
+body.bg-snow .prop-snow { opacity: 1; transform: scale(1) rotate(10deg); }
+body.bg-snow .char-img { filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4)) brightness(0.9) saturate(0.8); }
+
+@keyframes coldShiver {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  25% { transform: translateX(-3px) rotate(-2deg); }
+  75% { transform: translateX(3px) rotate(2deg); }
 }
 
-@keyframes thunderShake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-8px) rotate(-2deg); }
-  75% { transform: translateX(8px) rotate(2deg); }
+/* 雾天 */
+body.bg-fog .character { animation: fogFade 3s ease-in-out infinite; }
+body.bg-fog .char-img { filter: blur(2px) drop-shadow(0 10px 20px rgba(0,0,0,0.2)); opacity: 0.7; }
+
+@keyframes fogFade {
+  0%, 100% { opacity: 0.7; transform: translateY(0); }
+  50% { opacity: 0.5; transform: translateY(-5px); }
 }
 
-/* 晴天表情 */
-.crayfish.sunny .cf-head {
-  animation: happyHead 2s ease-in-out infinite;
-}
+/* 夜晚 */
+body.bg-clear-night .character { animation: nightGlow 4s ease-in-out infinite; }
+body.bg-clear-night .char-img { filter: drop-shadow(0 10px 20px rgba(100,100,255,0.3)) brightness(0.85); }
 
-@keyframes happyHead {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
-}
-
-/* 阴天表情 */
-.crayfish.cloudy .cf-eye::after {
-  animation: sadBlink 3s ease-in-out infinite;
-}
-
-@keyframes sadBlink {
-  0%, 100% { transform: scaleY(1) translateY(0); }
-  50% { transform: scaleY(0.5) translateY(2px); }
-}
-
-/* 阴天 - 嘴巴变波浪（难过） */
-.crayfish.cloudy .cf-mouth {
-  border-radius: 10px 0 10px 0;
-  animation: sadMouth 2s ease-in-out infinite;
-}
-
-@keyframes sadMouth {
-  0%, 100% { transform: scaleX(1); }
-  50% { transform: scaleX(0.6); }
-}
-
-/* 晴天 - 嘴巴开心 */
-.crayfish.sunny .cf-mouth {
-  height: 8px;
-  border-radius: 0 0 10px 10px;
-  background: #c0392b;
-}
-
-/* 雷暴 - 眼睛变大 */
-.crayfish.thunder .cf-eye {
-  width: 16px;
-  height: 18px;
-  animation: fearEyes 0.5s ease-in-out infinite;
-}
-
-.crayfish.thunder .cf-eye::after {
-  animation: fearEyesMove 0.3s ease-in-out infinite;
-}
-
-@keyframes fearEyes {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-}
-
-@keyframes fearEyesMove {
-  0%, 100% { transform: translate(0, 4px); }
-  50% { transform: translate(1px, 6px); }
-}
-
-/* 雨天 - 眼睛变小（眯眼） */
-.crayfish.rain .cf-eye {
-  height: 8px;
-  top: -4px;
-}
-
-.crayfish.rain .cf-eye::after {
-  top: 2px;
-  animation: none;
+@keyframes nightGlow {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.03); }
 }
 
 /* ===== 心情文字 ===== */
@@ -461,7 +308,7 @@ body {
   transform: translateX(-50%);
   z-index: 20;
   font-size: 16px;
-  color: #ff69b4;
+  color: var(--pink);
   text-align: center;
   padding: 10px 24px;
   background: rgba(0,0,0,0.4);
@@ -489,14 +336,8 @@ body.bg-sunny { background: linear-gradient(180deg, #4a90c2 0%, #f39c12 100%); }
 body.bg-cloudy { background: linear-gradient(180deg, #4a5568 0%, #2d3748 100%); }
 body.bg-clear-night { background: linear-gradient(180deg, #1a1a2e 0%, #2d2d5a 100%); }
 body.bg-thunder { background: linear-gradient(180deg, #2d2d4a 0%, #1a1a2e 100%); }
-body.bg-snow { background: linear-gradient(180deg, #e8f0f8 0%, #c9d6e3 100%); }
+body.bg-snow { background: linear-gradient(180deg, #e8f0f8 0%, #c9d6e3 100%); color: #333; }
 body.bg-fog { background: linear-gradient(180deg, #6b7280 0%, #4b5563 100%); }
-
-/* ===== 加载动画 ===== */
-.loading .crayfish {
-  opacity: 0.5;
-  animation: none;
-}
 
 /* ===== 错误提示 ===== */
 .error-msg {
@@ -517,4 +358,11 @@ body.bg-fog { background: linear-gradient(180deg, #6b7280 0%, #4b5563 100%); }
   15% { opacity: 1; transform: translateX(-50%) translateY(0); }
   80% { opacity: 1; }
   100% { opacity: 0; }
+}
+
+/* ===== 雪天文字反色 ===== */
+body.bg-snow .temp,
+body.bg-snow .desc,
+body.bg-snow .city {
+  color: #333;
 }

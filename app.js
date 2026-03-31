@@ -4,7 +4,6 @@
 
 const canvas = document.getElementById('weatherCanvas');
 const ctx = canvas.getContext('2d');
-const crayfish = document.getElementById('crayfish');
 const moodText = document.getElementById('moodText');
 const tempEl = document.getElementById('temp');
 const descEl = document.getElementById('desc');
@@ -15,38 +14,27 @@ let particles = [];
 let weatherType = 'default';
 let lastWeather = '';
 
-// ============ 天气数据获取（Open-Meteo）============
-
-const WMO_DESC = {
-  0: '晴朗', 1: '晴间多云', 2: '多云', 3: '阴天',
-  45: '雾', 48: '霜雾',
-  51: '小毛毛雨', 53: '中毛毛雨', 55: '大毛毛雨',
-  56: '冻毛毛雨', 57: '强冻毛毛雨',
-  61: '小雨', 63: '中雨', 65: '大雨',
-  66: '冻雨', 67: '强冻雨',
-  71: '小雪', 73: '中雪', 75: '大雪',
-  77: '雪粒',
-  80: '阵雨', 81: '中阵雨', 82: '强阵雨',
-  85: '阵雪', 86: '强阵雪',
-  95: '雷暴', 96: '雷暴+小冰雹', 99: '雷暴+大冰雹'
-};
+// ============ 天气数据获取（Nominatim + Open-Meteo）============
 
 async function fetchWeather(location) {
   try {
-    // 1. 城市名 → 经纬度
+    // 1. Nominatim（OpenStreetMap）：城市名 → 经纬度，中文支持好
     const geoRes = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=zh`
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1&accept-language=zh`
     );
     const geoData = await geoRes.json();
-    if (!geoData.results || geoData.results.length === 0) {
+    if (!geoData || geoData.length === 0) {
       showError('找不到这个城市，换个名字试试？');
       return false;
     }
-    const { latitude, longitude, name, country } = geoData.results[0];
+    const { lat, lon, display_name } = geoData[0];
+    // 取显示名里的城市部分
+    const parts = display_name.split(',');
+    const cityName = parts.length > 2 ? parts[parts.length - 3].trim() : display_name.split(',')[0];
 
-    // 2. 获取天气
+    // 2. Open-Meteo：用经纬度查天气（CORS 支持好）
     const weatherRes = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&timezone=auto&language=zh`
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`
     );
     const weatherData = await weatherRes.json();
     const current = weatherData.current;
@@ -54,8 +42,8 @@ async function fetchWeather(location) {
     const code = current.weather_code;
 
     tempEl.textContent = `${tempC}°`;
-    descEl.textContent = WMO_DESC[code] || '未知';
-    cityEl.textContent = `${name}, ${country}`;
+    descEl.textContent = codeToDesc(code);
+    cityEl.textContent = cityName;
 
     const now = new Date();
     updateTimeEl.textContent = `更新 ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -76,15 +64,31 @@ function showError(msg) {
   setTimeout(() => el.remove(), 3000);
 }
 
+function codeToDesc(code) {
+  const map = {
+    0: '晴朗', 1: '晴间多云', 2: '多云', 3: '阴天',
+    45: '雾', 48: '霜雾',
+    51: '小毛毛雨', 53: '中毛毛雨', 55: '大毛毛雨',
+    56: '冻毛毛雨', 57: '强冻毛毛雨',
+    61: '小雨', 63: '中雨', 65: '大雨',
+    66: '冻雨', 67: '强冻雨',
+    71: '小雪', 73: '中雪', 75: '大雪',
+    77: '雪粒',
+    80: '阵雨', 81: '中阵雨', 82: '强阵雨',
+    85: '阵雪', 86: '强阵雪',
+    95: '雷暴', 96: '雷暴+小冰雹', 99: '雷暴+大冰雹'
+  };
+  return map[code] || '未知';
+}
+
 // ============ 天气码映射（Open-Meteo WMO）============
 
 function updateWeather(code, temp) {
-  // WMO code: https://open-meteo.com/en/docs
   if ([95, 96, 99].includes(code)) {
     setWeather('thunder', temp);
   } else if ([71, 73, 75, 77, 85, 86].includes(code)) {
     setWeather('snow', temp);
-  } else if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) {
+  } else if ([61, 63, 65, 66, 67, 80, 81, 82, 51, 53, 55, 56, 57].includes(code)) {
     setWeather('rain', temp);
   } else if ([45, 48].includes(code)) {
     setWeather('fog', temp);
@@ -164,54 +168,68 @@ function setWeather(type, temp) {
 
   const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
+  // 隐藏所有道具
+  document.querySelectorAll('.prop').forEach(p => {
+    p.style.opacity = '0';
+    p.style.transform = 'scale(0)';
+  });
+
   switch (type) {
     case 'rain':
       document.body.className = 'bg-rain';
-      crayfish.className = 'crayfish rain';
       moodText.textContent = pick(slogans.rain);
+      showSpeech('撑伞！');
       initRain();
       break;
     case 'thunder':
       document.body.className = 'bg-thunder';
-      crayfish.className = 'crayfish thunder';
       moodText.textContent = pick(slogans.thunder);
+      showSpeech('好怕！');
       initThunder();
       break;
     case 'snow':
       document.body.className = 'bg-snow';
-      crayfish.className = 'crayfish cloudy';
       moodText.textContent = pick(slogans.snow);
+      showSpeech('冷冷冷！');
       initSnow();
       break;
     case 'sunny':
       document.body.className = 'bg-sunny';
-      crayfish.className = 'crayfish sunny';
-      moodText.textContent = temp > 30 ? pick(slogans.sunny) : pick(slogans.sunny);
+      moodText.textContent = pick(slogans.sunny);
+      showSpeech('防晒啦！');
       initSunny();
       break;
     case 'cloudy':
       document.body.className = 'bg-cloudy';
-      crayfish.className = 'crayfish cloudy';
       moodText.textContent = pick(slogans.cloudy);
+      showSpeech('难过...');
       initCloudy();
       break;
     case 'fog':
       document.body.className = 'bg-fog';
-      crayfish.className = 'crayfish cloudy';
       moodText.textContent = pick(slogans.fog);
+      showSpeech('看不见...');
       initFog();
       break;
     case 'clear-night':
       document.body.className = 'bg-clear-night';
-      crayfish.className = 'crayfish';
       moodText.textContent = pick(slogans['clear-night']);
+      showSpeech('晚安~');
       initClearNight();
       break;
     default:
-      crayfish.className = 'crayfish';
       moodText.textContent = '感受天气中...';
       break;
   }
+}
+
+function showSpeech(text) {
+  const bubble = document.getElementById('speechBubble');
+  bubble.textContent = text;
+  bubble.classList.remove('show');
+  void bubble.offsetWidth; // reflow
+  bubble.classList.add('show');
+  setTimeout(() => bubble.classList.remove('show'), 2500);
 }
 
 // ============ 粒子系统 ============

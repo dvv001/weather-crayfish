@@ -29,49 +29,23 @@
       <div class="city" id="city">--</div>
     </div>
 
-    <!-- 小龙虾角色 -->
-    <div class="crayfish" id="crayfish">
-      <!-- 身体 -->
-      <div class="cf-body">
-        <!-- 头部 -->
-        <div class="cf-head">
-          <!-- 眼睛 -->
-          <div class="cf-eye cf-eye-l"></div>
-          <div class="cf-eye cf-eye-r"></div>
-          <!-- 嘴巴 -->
-          <div class="cf-mouth"></div>
-        </div>
-        <!-- 虾身 -->
-        <div class="cf-torso"></div>
-        <!-- 大钳子 -->
-        <div class="cf-claw cf-claw-l">
-          <div class="claw-arm"></div>
-          <div class="claw-pincer"></div>
-        </div>
-        <div class="cf-claw cf-claw-r">
-          <div class="claw-arm"></div>
-          <div class="claw-pincer"></div>
-        </div>
-        <!-- 小脚 -->
-        <div class="cf-legs">
-          <div class="cf-leg"></div>
-          <div class="cf-leg"></div>
-          <div class="cf-leg"></div>
-        </div>
-        <!-- 尾巴 -->
-        <div class="cf-tail">
-          <div class="tail-segment"></div>
-          <div class="tail-segment"></div>
-          <div class="tail-segment"></div>
-          <div class="tail-flipper"></div>
-        </div>
+    <!-- 角色区域 -->
+    <div class="character" id="character">
+      <!-- 主角色图 -->
+      <img class="char-img" id="charImg" src="icon-192.png" alt="">
+
+      <!-- 天气道具层 -->
+      <div class="char-props" id="charProps">
+        <span class="prop prop-rain" id="propRain">☂️</span>
+        <span class="prop prop-sunscreen" id="propSunscreen">🧴</span>
+        <span class="prop prop-thunder" id="propThunder">😨</span>
+        <span class="prop prop-snow" id="propSnow">❄️</span>
+        <span class="prop prop-tear" id="propTear">💧</span>
+        <span class="prop prop-sunglasses" id="propSunglasses">🕶️</span>
       </div>
-      <!-- 伞（雨天） -->
-      <div class="cf-umbrella" id="umbrella">☂️</div>
-      <!-- 防晒霜（晴天） -->
-      <div class="cf-sunscreen" id="sunscreen">🧴</div>
-      <!-- 乌云（阴天） -->
-      <div class="cf-tear" id="tear">💧</div>
+
+      <!-- 表情气泡 -->
+      <div class="speech-bubble" id="speechBubble"></div>
     </div>
 
     <!-- 心情文字 -->
