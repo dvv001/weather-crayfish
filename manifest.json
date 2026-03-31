@@ -1,0 +1,23 @@
+{
+  "name": "虾天气",
+  "short_name": "虾天气",
+  "description": "可爱小龙虾天气主播，带你感受每一天的天气",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "lang": "zh-CN"
+}
