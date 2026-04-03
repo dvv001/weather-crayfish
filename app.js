@@ -1,5 +1,5 @@
 /* =============================================
-   虾天气 - Weather Crayfish PWA
+   虾天气 WeatherCosmos - 深空玻璃态
    ============================================= */
 
 const canvas = document.getElementById('weatherCanvas');
@@ -9,8 +9,13 @@ const ctx = canvas.getContext('2d');
 const tempEl = document.getElementById('temp');
 const descEl = document.getElementById('desc');
 const cityEl = document.getElementById('city');
+const feelsLikeEl = document.getElementById('feelsLike');
+const weatherIconEl = document.getElementById('weatherIcon');
+const humidityEl = document.getElementById('humidity');
+const windEl = document.getElementById('wind');
+const uvEl = document.getElementById('uv');
+const visibilityEl = document.getElementById('visibility');
 const moodText = document.getElementById('moodText');
-const updateTimeEl = document.getElementById('updateTime');
 const speechBubble = document.getElementById('speechBubble');
 const charEl = document.querySelector('.character');
 const locationInput = document.getElementById('locationInput');
@@ -18,6 +23,8 @@ const searchBtn = document.getElementById('searchBtn');
 const locateBtn = document.getElementById('locateBtn');
 const speakBtn = document.getElementById('speakBtn');
 const refreshBtn = document.getElementById('refreshBtn');
+const hourlyScroll = document.getElementById('hourlyScroll');
+const dailyList = document.getElementById('dailyList');
 
 // 状态
 let particles = [];
@@ -28,76 +35,73 @@ let lastSpokenText = '';
 // OpenWeather API Key
 const API_KEY = '42fb51a94cacac1ba5c473cc3c51da4d';
 
+// ============ 画布尺寸 ============
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  console.log('[Canvas] Resized:', canvas.width, 'x', canvas.height);
+}
+window.addEventListener('resize', resize);
+resize();
+
 // ============ 语音朗读 ============
-
 function speak(text) {
-  if (!('speechSynthesis' in window)) {
-    console.log('Speech not supported');
-    return;
-  }
-
-  // 停止之前的朗读
+  if (!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
-
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'en-US';
   utterance.rate = 1.0;
-  utterance.pitch = 1.0;
-
-  // 尝试找英文语音
   const voices = window.speechSynthesis.getVoices();
   const enVoice = voices.find(v => v.lang.includes('en'));
-  if (enVoice) {
-    utterance.voice = enVoice;
-  }
-
+  if (enVoice) utterance.voice = enVoice;
   window.speechSynthesis.speak(utterance);
   lastSpokenText = text;
 }
 
-// 朗读天气信息
 function announceWeather() {
   const city = cityEl.textContent;
   const temp = tempEl.textContent;
   const desc = descEl.textContent;
   const mood = moodText.textContent;
-
   const text = `In ${city}, it is ${desc}, ${temp}. ${mood}`;
   speak(text);
 }
 
-// 预加载语音
 if ('speechSynthesis' in window) {
   window.speechSynthesis.getVoices();
-  window.speechSynthesis.onvoiceschanged = () => {
-    window.speechSynthesis.getVoices();
-  };
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
 
-// 画布尺寸
-function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  console.log('[Canvas] Resized to:', canvas.width, 'x', canvas.height);
+// ============ 天气图标映射 ============
+function getWeatherIcon(icon) {
+  const map = {
+    '01d': '☀️', '01n': '🌙',
+    '02d': '⛅', '02n': '☁️',
+    '03d': '☁️', '03n': '☁️',
+    '04d': '☁️', '04n': '☁️',
+    '09d': '🌧️', '09n': '🌧️',
+    '10d': '🌦️', '10n': '🌧️',
+    '11d': '⛈️', '11n': '⛈️',
+    '13d': '❄️', '13n': '❄️',
+    '50d': '🌫️', '50n': '🌫️'
+  };
+  return map[icon] || '🌤️';
 }
-window.addEventListener('resize', resize);
-resize();
 
 // ============ 天气数据获取 ============
-
 async function fetchWeather(location) {
   try {
     isLoading = true;
     showLoading(true);
 
-    // 1. OpenWeather Geocoding API
+    // 地理编码
     const geoRes = await fetch(
       `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(location)}&limit=1&appid=${API_KEY}`
     );
     const geoData = await geoRes.json();
 
     if (!geoData || geoData.length === 0) {
-      showError('找不到这个城市，换个名字试试？');
+      showError('City not found');
       isLoading = false;
       showLoading(false);
       return false;
@@ -105,72 +109,168 @@ async function fetchWeather(location) {
 
     const { lat, lon, name, country } = geoData[0];
 
-    // 2. OpenWeather Current Weather API
+    // 当前天气
     const weatherRes = await fetch(
       `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=zh_cn`
     );
     const weatherData = await weatherRes.json();
 
     if (weatherData.cod !== 200) {
-      showError('获取天气失败');
+      showError('Failed to get weather');
       isLoading = false;
       showLoading(false);
       return false;
     }
 
-    const { temp } = weatherData.main;
+    const { temp, feels_like, humidity } = weatherData.main;
     const { description, icon } = weatherData.weather[0];
+    const { speed: windSpeed } = weatherData.wind;
+    const { visibility } = weatherData;
     const weatherCode = iconToCode(icon);
 
-    // 更新 UI
+    // 更新主界面
     tempEl.textContent = `${Math.round(temp)}°`;
     descEl.textContent = description;
     cityEl.textContent = `${name}, ${country}`;
+    feelsLikeEl.textContent = `Feels like ${Math.round(feels_like)}°`;
+    weatherIconEl.textContent = getWeatherIcon(icon);
+    humidityEl.textContent = `${humidity}%`;
+    windEl.textContent = `${Math.round(windSpeed * 3.6)} km/h`;
+    uvEl.textContent = getUVLevel(windSpeed);
+    visibilityEl.textContent = `${(visibility / 1000).toFixed(1)} km`;
 
-    const now = new Date();
-    updateTimeEl.textContent = `更新 ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-    // 设置天气
     setWeather(weatherCode);
+
+    // 获取小时预报
+    await fetchHourlyForecast(lat, lon);
+
+    // 获取7日预报
+    await fetchDailyForecast(lat, lon);
+
     isLoading = false;
     showLoading(false);
 
-    // 延迟朗读，让气泡先显示
     setTimeout(announceWeather, 1500);
     return true;
 
   } catch (e) {
     console.error('Weather fetch error:', e);
-    showError('网络开小差了，等会再试~');
+    showError('Network error, please try again');
     isLoading = false;
     showLoading(false);
-    // API 失败时设置默认天气，确保背景有效果
     setWeather(0);
     return false;
   }
 }
 
-// OpenWeather 图标转天气码
-function iconToCode(icon) {
-  const map = {
-    '01d': 0, '01n': 800,           // 晴
-    '02d': 1, '02n': 801,           // 晴间多云
-    '03d': 2, '03n': 802,           // 多云
-    '04d': 3, '04n': 803,           // 阴
-    '09d': 61, '09n': 61,           // 小雨
-    '10d': 63, '10n': 63,           // 中雨
-    '11d': 95, '11n': 95,           // 雷暴
-    '13d': 71, '13n': 71,           // 雪
-    '50d': 45, '50n': 45            // 雾
-  };
-  return map[icon] ?? 0;
+async function fetchHourlyForecast(lat, lon) {
+  try {
+    const res = await fetch(
+      `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=zh_cn`
+    );
+    const data = await res.json();
+    if (data.cod !== '200') return;
+
+    // 取接下来24小时（每3小时一个数据，共8个）
+    const hourly = data.list.slice(0, 8);
+    renderHourlyForecast(hourly);
+  } catch (e) {
+    console.error('Hourly forecast error:', e);
+  }
+}
+
+function renderHourlyForecast(hourly) {
+  hourlyScroll.innerHTML = '';
+
+  hourly.forEach((item, i) => {
+    const time = new Date(item.dt * 1000);
+    const temp = Math.round(item.main.temp);
+    const icon = getWeatherIcon(item.weather[0].icon);
+    const isNow = i === 0;
+
+    const div = document.createElement('div');
+    div.className = 'hourly-item glass-card';
+    div.innerHTML = `
+      <div class="time">${isNow ? 'Now' : formatTime(time)}</div>
+      <div class="icon">${icon}</div>
+      <div class="temp">${temp}°</div>
+    `;
+    hourlyScroll.appendChild(div);
+  });
+}
+
+async function fetchDailyForecast(lat, lon) {
+  try {
+    const res = await fetch(
+      `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=zh_cn`
+    );
+    const data = await res.json();
+    if (data.cod !== '200') return;
+
+    // 处理每日数据（每天一个预报，取中午的数据）
+    const daily = {};
+    data.list.forEach(item => {
+      const date = new Date(item.dt * 1000).toDateString();
+      if (!daily[date] || new Date(item.dt * 1000).getHours() === 12) {
+        daily[date] = item;
+      }
+    });
+
+    const days = Object.values(daily).slice(0, 7);
+    renderDailyForecast(days);
+  } catch (e) {
+    console.error('Daily forecast error:', e);
+  }
+}
+
+function renderDailyForecast(days) {
+  dailyList.innerHTML = '';
+  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  days.forEach((item, i) => {
+    const date = new Date(item.dt * 1000);
+    const tempMin = Math.round(item.main.temp_min);
+    const tempMax = Math.round(item.main.temp_max);
+    const icon = getWeatherIcon(item.weather[0].icon);
+    const desc = item.weather[0].description;
+    const dayName = i === 0 ? 'Today' : weekdays[date.getDay()];
+
+    const div = document.createElement('div');
+    div.className = 'daily-item';
+    div.innerHTML = `
+      <div class="day">${dayName}</div>
+      <div class="icon">${icon}</div>
+      <div class="desc">${desc}</div>
+      <div class="temps">
+        <span class="high">${tempMax}°</span>
+        <span class="low">${tempMin}°</span>
+      </div>
+    `;
+    dailyList.appendChild(div);
+  });
+}
+
+function formatTime(date) {
+  return date.getHours().toString().padStart(2, '0') + ':00';
+}
+
+function getUVLevel(windSpeed) {
+  // OpenWeather没有UV指数，用风速模拟
+  if (windSpeed > 10) return 'High';
+  if (windSpeed > 5) return 'Medium';
+  return 'Low';
 }
 
 function showLoading(show) {
   if (show) {
     tempEl.textContent = '--°';
-    descEl.textContent = '加载中...';
+    descEl.textContent = 'Loading...';
     cityEl.textContent = '--';
+    feelsLikeEl.textContent = 'Feels like --°';
+    humidityEl.textContent = '--%';
+    windEl.textContent = '--';
+    uvEl.textContent = '--';
+    visibilityEl.textContent = '-- km';
   }
 }
 
@@ -182,26 +282,22 @@ function showError(msg) {
   setTimeout(() => el.remove(), 3000);
 }
 
-// WMO 天气码转描述
-function codeToDesc(code) {
+function iconToCode(icon) {
   const map = {
-    0: '晴朗', 1: '晴间多云', 2: '多云', 3: '阴天',
-    45: '雾', 48: '霜雾',
-    51: '小毛毛雨', 53: '中毛毛雨', 55: '大毛毛雨',
-    56: '冻毛毛雨', 57: '强冻毛毛雨',
-    61: '小雨', 63: '中雨', 65: '大雨',
-    66: '冻雨', 67: '强冻雨',
-    71: '小雪', 73: '中雪', 75: '大雪',
-    77: '雪粒',
-    80: '阵雨', 81: '中阵雨', 82: '强阵雨',
-    85: '阵雪', 86: '强阵雪',
-    95: '雷暴', 96: '雷暴+冰雹', 99: '雷暴+大冰雹'
+    '01d': 0, '01n': 800,
+    '02d': 1, '02n': 801,
+    '03d': 2, '03n': 802,
+    '04d': 3, '04n': 803,
+    '09d': 61, '09n': 61,
+    '10d': 63, '10n': 63,
+    '11d': 95, '11n': 95,
+    '13d': 71, '13n': 71,
+    '50d': 45, '50n': 45
   };
-  return map[code] || '未知';
+  return map[icon] ?? 0;
 }
 
 // ============ 天气分类 ============
-
 function setWeather(code) {
   let type;
 
@@ -225,26 +321,17 @@ function setWeather(code) {
   if (currentWeather === type) return;
   currentWeather = type;
 
-  // 移除旧状态
   document.body.className = '';
-
-  // 隐藏所有道具
   document.querySelectorAll('.prop').forEach(p => {
     p.style.opacity = '0';
     p.style.transform = 'scale(0)';
   });
 
-  // 语录
   const slogans = getSlogans(type);
   moodText.textContent = slogans;
-
-  // 语音气泡
   showSpeech(getSpeech(type));
-
-  // 初始化粒子
   initWeather(type);
 
-  // 应用背景和道具（延迟确保粒子先初始化）
   setTimeout(() => {
     document.body.className = 'bg-' + type;
     showProps(type);
@@ -253,71 +340,28 @@ function setWeather(code) {
 
 function getSpeech(type) {
   const speeches = {
-    rain: '撑伞！',
-    thunder: '好怕！',
-    snow: '冷冷冷！',
-    sunny: '防晒啦！',
-    cloudy: '难过...',
-    fog: '看不清...',
-    'clear-night': '晚安~',
-    default: '嗯...'
+    rain: 'Take an umbrella!',
+    thunder: 'So scary!',
+    snow: 'Brrr, so cold!',
+    sunny: 'Wear sunscreen!',
+    cloudy: 'Feeling blue...',
+    fog: 'Can\'t see...',
+    'clear-night': 'Good night~',
+    default: 'Hmm...'
   };
-  return speeches[type] || '嗯...';
+  return speeches[type] || 'Hmm...';
 }
 
 function getSlogans(type) {
   const map = {
-    rain: [
-      'The rain is pouring down like crazy',
-      'This rain is heavier than my diet resolve',
-      'Rainy days are perfect for sleeping',
-      'Walking in the rain with my umbrella',
-      'Rain: soaking everyone equally'
-    ],
-    thunder: [
-      'The thunder is so loud even max volume won\'t cover it',
-      'Someone is渡劫! Wait, I\'m not a monster...',
-      'So scared! Hiding under my blanket',
-      'Boyfriends can go, but not thunder',
-      'Am I safe hiding under the covers?'
-    ],
-    snow: [
-      'Snow is romantic, except when going outside',
-      'Building a snowman isn\'t hard, making one that looks like me is',
-      'Snowflakes falling, this crayfish is spacing out',
-      'So cold my fingers are shaking',
-      'Snow isn\'t cold, melting snow is cold'
-    ],
-    sunny: [
-      'The weather is amazing today, mood is boosted',
-      'Sunshine heals everything',
-      'Get roasted by the sun or roasted by laziness at home',
-      'Sunshine energy is fully charged',
-      'Perfect weather for drying blankets'
-    ],
-    cloudy: [
-      'My mood is as unpredictable as the weather...',
-      'Even my shadow is gray without sunshine',
-      'Cloudy days are for daydreaming',
-      'The clouds are thick, this crayfish feels blue',
-      'Today I want to lie flat, stay home, and slack off'
-    ],
-    fog: [
-      'Everything is white, can\'t see a thing...',
-      'The fog is so thick, even my crayfish eyes can\'t shine',
-      'Walking in the fog and getting... lost',
-      'Can\'t see my hand in front of my face',
-      'The fog is like a free filter'
-    ],
-    'clear-night': [
-      'So many stars, this crayfish is sleepy',
-      'Good night world, good night crayfish',
-      'The moonlight is beautiful tonight',
-      'Sleep well, stay energetic tomorrow',
-      'Stars twinkling like saying goodnight'
-    ]
+    rain: ['The rain is pouring down like crazy', 'This rain is heavier than my diet resolve', 'Rainy days are perfect for sleeping'],
+    thunder: ['The thunder is so loud', 'Someone is渡劫! Wait, I\'m not a monster...', 'So scared! Hiding under my blanket'],
+    snow: ['Snow is romantic, except when going outside', 'Building a snowman isn\'t hard', 'Snowflakes falling, this crayfish is spacing out'],
+    sunny: ['The weather is amazing today', 'Sunshine heals everything', 'Get roasted by the sun or stay home'],
+    cloudy: ['My mood is as unpredictable as the weather', 'Even my shadow is gray without sunshine', 'Cloudy days are for daydreaming'],
+    fog: ['Everything is white, can\'t see a thing', 'The fog is so thick', 'Walking in the fog and getting lost'],
+    'clear-night': ['So many stars, this crayfish is sleepy', 'Good night world, good night crayfish', 'The moonlight is beautiful tonight']
   };
-
   const arr = map[type] || ['Feeling the weather...'];
   return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -340,7 +384,6 @@ function showProps(type) {
     fog: [],
     'clear-night': []
   };
-
   const toShow = props[type] || [];
   toShow.forEach(id => {
     const el = document.getElementById(id);
@@ -351,12 +394,130 @@ function showProps(type) {
   });
 }
 
-// ============ 天气粒子系统 ============
+// ============ 银河系背景 ============
+const galaxyStars = [];
+let galaxyTime = 0;
 
+function initGalaxy() {
+  for (let i = 0; i < 150; i++) {
+    galaxyStars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: 0.5 + Math.random() * 1.5,
+      speed: 0.2 + Math.random() * 0.3,
+      twinkle: Math.random() * Math.PI * 2,
+      twinkleSpeed: 0.02 + Math.random() * 0.02,
+      hue: 200 + Math.random() * 60
+    });
+  }
+}
+initGalaxy();
+
+const shootingStars = [];
+
+function drawGalaxy() {
+  galaxyTime += 0.005;
+
+  // 银河光晕
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+
+  ctx.save();
+  for (let r = Math.max(canvas.width, canvas.height); r > 0; r -= 80) {
+    const alpha = 0.015 + (1 - r / Math.max(canvas.width, canvas.height)) * 0.02;
+    const rotation = galaxyTime * 0.05;
+    ctx.globalAlpha = alpha;
+    const grad = ctx.createRadialGradient(
+      cx + Math.cos(rotation) * 30, cy + Math.sin(rotation) * 30, r * 0.2,
+      cx, cy, r
+    );
+    grad.addColorStop(0, 'rgba(100, 80, 150, 0.5)');
+    grad.addColorStop(0.5, 'rgba(60, 40, 100, 0.3)');
+    grad.addColorStop(1, 'rgba(20, 20, 50, 0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+  ctx.restore();
+
+  // 星星
+  galaxyStars.forEach(star => {
+    star.twinkle += star.twinkleSpeed;
+    const alpha = 0.3 + 0.4 * Math.abs(Math.sin(star.twinkle));
+    const size = star.size * (0.8 + 0.3 * Math.sin(star.twinkle));
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    const starGrad = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, size * 2);
+    starGrad.addColorStop(0, `hsla(${star.hue}, 80%, 90%, 1)`);
+    starGrad.addColorStop(0.5, `hsla(${star.hue}, 70%, 70%, 0.5)`);
+    starGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = starGrad;
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, size * 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    star.x += star.speed * 0.05;
+    if (star.x > canvas.width + 10) {
+      star.x = -10;
+      star.y = Math.random() * canvas.height;
+    }
+  });
+}
+
+function updateShootingStars() {
+  if (Math.random() < 0.002) {
+    shootingStars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height * 0.3,
+      length: 60 + Math.random() * 40,
+      speed: 6 + Math.random() * 4,
+      angle: Math.PI * 0.25 + Math.random() * 0.1,
+      life: 1
+    });
+  }
+
+  for (let i = shootingStars.length - 1; i >= 0; i--) {
+    const s = shootingStars[i];
+    s.x += Math.cos(s.angle) * s.speed;
+    s.y += Math.sin(s.angle) * s.speed;
+    s.life -= 0.015;
+    if (s.life <= 0 || s.x > canvas.width + 100 || s.y > canvas.height + 100) {
+      shootingStars.splice(i, 1);
+    }
+  }
+}
+
+function renderShootingStars() {
+  shootingStars.forEach(s => {
+    ctx.save();
+    ctx.globalAlpha = s.life;
+    const grad = ctx.createLinearGradient(
+      s.x, s.y,
+      s.x - Math.cos(s.angle) * s.length, s.y - Math.sin(s.angle) * s.length
+    );
+    grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    grad.addColorStop(0.3, 'rgba(200, 220, 255, 0.8)');
+    grad.addColorStop(1, 'transparent');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 1.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(s.x, s.y);
+    ctx.lineTo(s.x - Math.cos(s.angle) * s.length, s.y - Math.sin(s.angle) * s.length);
+    ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+// ============ 粒子系统 ============
 function initWeather(type) {
   particles = [];
-
-  // 确保 canvas 尺寸已设置
   if (!canvas.width || !canvas.height) {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -372,8 +533,7 @@ function initWeather(type) {
     case 'clear-night': initClearNight(); break;
     default: initSunny(); break;
   }
-
-  console.log(`[Weather] ${type} particles initialized:`, particles.length);
+  console.log(`[Weather] ${type} particles:`, particles.length);
 }
 
 function initRain() {
@@ -417,7 +577,6 @@ function initSnow() {
 }
 
 function initSunny() {
-  // 太阳光线
   for (let i = 0; i < 16; i++) {
     particles.push({
       angle: (i / 16) * Math.PI * 2,
@@ -426,7 +585,6 @@ function initSunny() {
       opacity: 0.2 + Math.random() * 0.15
     });
   }
-  // 光晕漂浮粒子
   for (let i = 0; i < 50; i++) {
     particles.push({
       isGlow: true,
@@ -437,7 +595,6 @@ function initSunny() {
       opacity: 0.4 + Math.random() * 0.4
     });
   }
-  // 额外光尘
   for (let i = 0; i < 30; i++) {
     particles.push({
       isDust: true,
@@ -453,12 +610,12 @@ function initSunny() {
 }
 
 function initCloudy() {
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 15; i++) {
     particles.push({
-      x: Math.random() * canvas.width * 1.5 - canvas.width * 0.25,
+      x: Math.random() * canvas.width * 1.5,
       y: Math.random() * canvas.height,
-      width: 250 + Math.random() * 350,
-      height: 120 + Math.random() * 80,
+      width: 200 + Math.random() * 300,
+      height: 100 + Math.random() * 80,
       speed: 0.2 + Math.random() * 0.3,
       opacity: 0.15 + Math.random() * 0.2
     });
@@ -478,185 +635,28 @@ function initFog() {
 }
 
 function initClearNight() {
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 80; i++) {
     particles.push({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height * 0.7,
-      radius: 0.5 + Math.random() * 2.5,
+      radius: 0.5 + Math.random() * 2,
       twinkle: Math.random() * Math.PI * 2,
-      speed: 0.025 + Math.random() * 0.035,
-      opacity: 0.4 + Math.random() * 0.6
+      speed: 0.025 + Math.random() * 0.03,
+      opacity: 0.4 + Math.random() * 0.5
     });
   }
-  // 月亮
   particles.push({
     isMoon: true,
     x: canvas.width * 0.8,
     y: canvas.height * 0.15,
-    radius: 40
-  });
-}
-
-// ============ 银河系背景 ============
-const galaxyStars = [];
-let galaxyTime = 0;
-
-function initGalaxy() {
-  for (let i = 0; i < 200; i++) {
-    galaxyStars.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      size: 0.5 + Math.random() * 2,
-      speed: 0.2 + Math.random() * 0.5,
-      twinkle: Math.random() * Math.PI * 2,
-      twinkleSpeed: 0.02 + Math.random() * 0.03,
-      hue: 200 + Math.random() * 60 // 蓝色到紫色
-    });
-  }
-}
-initGalaxy();
-
-function drawGalaxy() {
-  galaxyTime += 0.01;
-
-  // 银河带渐变
-  ctx.save();
-  const cx = canvas.width / 2;
-  const cy = canvas.height / 2;
-
-  // 旋转的银河光带
-  for (let r = Math.max(canvas.width, canvas.height); r > 0; r -= 50) {
-    const alpha = 0.02 + (1 - r / Math.max(canvas.width, canvas.height)) * 0.03;
-    const rotation = galaxyTime * 0.1;
-
-    ctx.globalAlpha = alpha;
-    const grad = ctx.createRadialGradient(
-      cx + Math.cos(rotation) * 50,
-      cy + Math.sin(rotation) * 50,
-      r * 0.3,
-      cx,
-      cy,
-      r
-    );
-    grad.addColorStop(0, 'rgba(100, 80, 150, 0.3)');
-    grad.addColorStop(0.5, 'rgba(60, 40, 100, 0.2)');
-    grad.addColorStop(1, 'rgba(20, 20, 50, 0)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
-  ctx.restore();
-
-  // 银河星星
-  galaxyStars.forEach(star => {
-    star.twinkle += star.twinkleSpeed;
-
-    const alpha = 0.3 + 0.5 * Math.abs(Math.sin(star.twinkle));
-    const size = star.size * (0.8 + 0.4 * Math.sin(star.twinkle));
-
-    ctx.save();
-    ctx.globalAlpha = alpha;
-
-    // 星星发光
-    const starGrad = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, size * 3);
-    starGrad.addColorStop(0, `hsla(${star.hue}, 80%, 90%, 1)`);
-    starGrad.addColorStop(0.3, `hsla(${star.hue}, 70%, 70%, 0.6)`);
-    starGrad.addColorStop(1, 'transparent');
-    ctx.fillStyle = starGrad;
-    ctx.beginPath();
-    ctx.arc(star.x, star.y, size * 3, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 星星核心
-    ctx.fillStyle = `hsla(${star.hue}, 60%, 95%, 1)`;
-    ctx.beginPath();
-    ctx.arc(star.x, star.y, size * 0.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.restore();
-
-    // 星星缓慢漂移
-    star.x += star.speed * 0.1;
-    if (star.x > canvas.width + 10) {
-      star.x = -10;
-      star.y = Math.random() * canvas.height;
-    }
-  });
-
-  // 流星
-  if (Math.random() < 0.003) {
-    drawShootingStar();
-  }
-}
-
-// 流星数据
-const shootingStars = [];
-
-function drawShootingStar() {
-  const startX = Math.random() * canvas.width;
-  const startY = Math.random() * canvas.height * 0.5;
-  shootingStars.push({
-    x: startX,
-    y: startY,
-    length: 80 + Math.random() * 60,
-    speed: 8 + Math.random() * 4,
-    angle: Math.PI * 0.25 + Math.random() * 0.1,
-    life: 1
-  });
-}
-
-function updateShootingStars() {
-  for (let i = shootingStars.length - 1; i >= 0; i--) {
-    const s = shootingStars[i];
-    s.x += Math.cos(s.angle) * s.speed;
-    s.y += Math.sin(s.angle) * s.speed;
-    s.life -= 0.02;
-
-    if (s.life <= 0 || s.x > canvas.width + 100 || s.y > canvas.height + 100) {
-      shootingStars.splice(i, 1);
-    }
-  }
-}
-
-function renderShootingStars() {
-  shootingStars.forEach(s => {
-    ctx.save();
-    ctx.globalAlpha = s.life;
-
-    const grad = ctx.createLinearGradient(
-      s.x, s.y,
-      s.x - Math.cos(s.angle) * s.length,
-      s.y - Math.sin(s.angle) * s.length
-    );
-    grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
-    grad.addColorStop(0.3, 'rgba(200, 220, 255, 0.8)');
-    grad.addColorStop(1, 'transparent');
-
-    ctx.strokeStyle = grad;
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(s.x, s.y);
-    ctx.lineTo(s.x - Math.cos(s.angle) * s.length, s.y - Math.sin(s.angle) * s.length);
-    ctx.stroke();
-
-    // 流星头
-    ctx.fillStyle = '#fff';
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = '#fff';
-    ctx.beginPath();
-    ctx.arc(s.x, s.y, 2, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.restore();
+    radius: 35
   });
 }
 
 // ============ 绘制 ============
-
 let thunderFlash = 0;
 
 function draw() {
-  // 确保 canvas 尺寸有效
   if (!canvas.width || !canvas.height) {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -664,11 +664,12 @@ function draw() {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // 银河系背景
+  // 银河背景
   drawGalaxy();
   updateShootingStars();
   renderShootingStars();
 
+  // 天气粒子
   switch (currentWeather) {
     case 'rain': drawRain(); break;
     case 'thunder': drawThunder(); break;
@@ -687,8 +688,6 @@ function drawRain() {
   particles.forEach(p => {
     ctx.save();
     ctx.globalAlpha = p.opacity;
-
-    // 雨滴
     ctx.strokeStyle = `hsla(${p.hue}, 70%, 70%, 0.8)`;
     ctx.lineWidth = 1.5;
     ctx.lineCap = 'round';
@@ -696,15 +695,11 @@ function drawRain() {
     ctx.moveTo(p.x, p.y);
     ctx.lineTo(p.x + 2, p.y + p.length);
     ctx.stroke();
-
-    // 底部光点
     ctx.fillStyle = `hsla(${p.hue}, 90%, 80%, 0.9)`;
     ctx.beginPath();
     ctx.arc(p.x + 2, p.y + p.length, 1.5, 0, Math.PI * 2);
     ctx.fill();
-
     ctx.restore();
-
     p.y += p.speed;
     p.x += 0.3;
     if (p.y > canvas.height) {
@@ -719,8 +714,6 @@ function drawThunder() {
   particles.forEach(p => {
     ctx.save();
     ctx.globalAlpha = p.opacity;
-
-    // 闪电
     ctx.strokeStyle = `hsla(${p.hue}, 70%, 75%, 0.9)`;
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
@@ -728,15 +721,11 @@ function drawThunder() {
     ctx.moveTo(p.x, p.y);
     ctx.lineTo(p.x, p.y + p.length);
     ctx.stroke();
-
-    // 闪电头
     ctx.fillStyle = `hsla(${p.hue}, 90%, 90%, 1)`;
     ctx.beginPath();
     ctx.arc(p.x, p.y + p.length, 2.5, 0, Math.PI * 2);
     ctx.fill();
-
     ctx.restore();
-
     p.y += p.speed;
     p.x += 0.3;
     if (p.y > canvas.height) {
@@ -745,7 +734,6 @@ function drawThunder() {
     }
   });
 
-  // 闪电效果
   if (Math.random() < 0.006) {
     thunderFlash = 10;
   }
@@ -757,7 +745,6 @@ function drawThunder() {
     ctx.restore();
     thunderFlash--;
   }
-
   ctx.globalAlpha = 1;
 }
 
@@ -765,19 +752,14 @@ function drawSnow() {
   particles.forEach(p => {
     ctx.save();
     ctx.globalAlpha = p.opacity;
-
-    // 雪粒
     ctx.fillStyle = `hsla(${p.hue}, 60%, 95%, 0.9)`;
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
     ctx.fill();
-
     ctx.restore();
-
     p.wobble += 0.03;
     p.x += Math.sin(p.wobble) * 0.6;
     p.y += p.speed;
-
     if (p.y > canvas.height + 10) {
       p.y = -10;
       p.x = Math.random() * canvas.width;
@@ -791,7 +773,6 @@ function drawSunny() {
   const cy = 140;
   const maxR = Math.min(canvas.width, canvas.height) * 0.4;
 
-  // 外层光晕
   const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR);
   grad.addColorStop(0, 'rgba(255, 230, 120, 0.8)');
   grad.addColorStop(0.3, 'rgba(255, 200, 80, 0.4)');
@@ -800,14 +781,11 @@ function drawSunny() {
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // 太阳射线
   particles.forEach(p => {
     if (p.isGlow) {
-      // 光晕飘粒
       p.angle += p.speed;
       const gx = cx + Math.cos(p.angle) * p.radius;
       const gy = cy + Math.sin(p.angle) * p.radius;
-
       ctx.save();
       ctx.globalAlpha = p.opacity;
       ctx.shadowBlur = 15;
@@ -818,7 +796,6 @@ function drawSunny() {
       ctx.fill();
       ctx.restore();
     } else if (p.isDust) {
-      // 光尘粒子
       ctx.save();
       ctx.globalAlpha = p.opacity;
       ctx.shadowBlur = 6;
@@ -828,7 +805,6 @@ function drawSunny() {
       ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
-
       p.x += p.speedX;
       p.y += p.speedY;
       p.life--;
@@ -838,13 +814,11 @@ function drawSunny() {
         p.life = 150 + Math.random() * 100;
       }
     } else {
-      // 射线
       p.angle += p.speed;
       const outerX = cx + Math.cos(p.angle) * maxR * 0.85;
       const outerY = cy + Math.sin(p.angle) * maxR * 0.85;
       const innerX = cx + Math.cos(p.angle) * (maxR * 0.35);
       const innerY = cy + Math.sin(p.angle) * (maxR * 0.35);
-
       ctx.save();
       ctx.globalAlpha = p.opacity;
       ctx.shadowBlur = 8;
@@ -859,43 +833,25 @@ function drawSunny() {
       ctx.restore();
     }
   });
-
   ctx.globalAlpha = 1;
 }
 
 function drawCloudy() {
-  // 背景灰暗
-  ctx.save();
-  const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  bg.addColorStop(0, 'rgba(80, 90, 100, 0.4)');
-  bg.addColorStop(1, 'rgba(60, 70, 80, 0.3)');
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.restore();
-
   particles.forEach(p => {
     ctx.save();
     ctx.globalAlpha = p.opacity;
-
-    // 大面积云层
-    const grad = ctx.createRadialGradient(
-      p.x, p.y, 0,
-      p.x, p.y, p.width * 0.6
-    );
-    grad.addColorStop(0, 'rgba(120, 130, 145, 0.5)');
-    grad.addColorStop(0.4, 'rgba(100, 110, 125, 0.35)');
-    grad.addColorStop(0.7, 'rgba(80, 90, 105, 0.2)');
-    grad.addColorStop(1, 'rgba(60, 70, 85, 0)');
-
+    const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.width * 0.5);
+    grad.addColorStop(0, 'rgba(120, 130, 145, 0.4)');
+    grad.addColorStop(0.5, 'rgba(100, 110, 125, 0.25)');
+    grad.addColorStop(1, 'rgba(80, 90, 105, 0)');
     ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.ellipse(p.x, p.y, p.width * 0.6, p.height * 0.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(p.x, p.y, p.width * 0.5, p.height * 0.4, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
-
     p.x += p.speed;
-    if (p.x > canvas.width + p.width * 0.5) {
-      p.x = -p.width * 0.6;
+    if (p.x > canvas.width + p.width) {
+      p.x = -p.width;
     }
   });
   ctx.globalAlpha = 1;
@@ -905,10 +861,8 @@ function drawFog() {
   particles.forEach(p => {
     ctx.save();
     ctx.globalAlpha = p.opacity;
-
     ctx.shadowBlur = 30;
     ctx.shadowColor = 'rgba(160, 165, 175, 0.4)';
-
     const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
     grad.addColorStop(0, 'rgba(180, 185, 195, 0.4)');
     grad.addColorStop(0.5, 'rgba(160, 165, 175, 0.2)');
@@ -918,7 +872,6 @@ function drawFog() {
     ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
-
     p.x += p.speed;
     if (p.x > canvas.width + p.radius) {
       p.x = -p.radius;
@@ -930,16 +883,11 @@ function drawFog() {
 function drawClearNight() {
   particles.forEach(p => {
     if (p.isMoon) {
-      // 月亮发光效果
       ctx.save();
       ctx.shadowBlur = 40;
       ctx.shadowColor = 'rgba(255, 255, 200, 0.5)';
-
       ctx.globalAlpha = 0.95;
-      const moonGrad = ctx.createRadialGradient(
-        p.x - 10, p.y - 10, 0,
-        p.x, p.y, p.radius
-      );
+      const moonGrad = ctx.createRadialGradient(p.x - 10, p.y - 10, 0, p.x, p.y, p.radius);
       moonGrad.addColorStop(0, 'rgba(255, 255, 240, 1)');
       moonGrad.addColorStop(0.5, 'rgba(255, 250, 220, 0.95)');
       moonGrad.addColorStop(0.8, 'rgba(255, 245, 200, 0.9)');
@@ -952,7 +900,6 @@ function drawClearNight() {
     } else {
       p.twinkle += p.speed;
       const alpha = p.opacity * (0.4 + 0.6 * Math.abs(Math.sin(p.twinkle)));
-
       ctx.save();
       ctx.globalAlpha = alpha;
       ctx.shadowBlur = 8;
@@ -968,10 +915,9 @@ function drawClearNight() {
 }
 
 // ============ GPS 定位 ============
-
 function getCurrentLocation() {
   if (!navigator.geolocation) {
-    showError('浏览器不支持定位功能');
+    showError('Geolocation not supported');
     return;
   }
 
@@ -981,54 +927,49 @@ function getCurrentLocation() {
   navigator.geolocation.getCurrentPosition(
     async (position) => {
       const { latitude, longitude } = position.coords;
-
       try {
-        // OpenWeather Reverse Geocoding
         const geoRes = await fetch(
           `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${API_KEY}`
         );
         const geoData = await geoRes.json();
+        const cityName = geoData && geoData.length > 0 ? geoData[0].name : 'Current Location';
 
-        let cityName = '当前位置';
-        if (geoData && geoData.length > 0) {
-          cityName = geoData[0].name;
-        }
-
-        // OpenWeather Current Weather
         const weatherRes = await fetch(
           `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric&lang=zh_cn`
         );
         const weatherData = await weatherRes.json();
 
         if (weatherData.cod !== 200) {
-          showError('获取天气失败');
-          locateBtn.textContent = '📍';
-          locateBtn.style.opacity = '1';
+          showError('Failed to get weather');
           return;
         }
 
-        const { temp } = weatherData.main;
+        const { temp, feels_like, humidity } = weatherData.main;
         const { description, icon } = weatherData.weather[0];
+        const { speed: windSpeed } = weatherData.wind;
+        const { visibility } = weatherData;
         const code = iconToCode(icon);
 
         tempEl.textContent = `${Math.round(temp)}°`;
         descEl.textContent = description;
         cityEl.textContent = cityName;
+        feelsLikeEl.textContent = `Feels like ${Math.round(feels_like)}°`;
+        weatherIconEl.textContent = getWeatherIcon(icon);
+        humidityEl.textContent = `${humidity}%`;
+        windEl.textContent = `${Math.round(windSpeed * 3.6)} km/h`;
+        uvEl.textContent = getUVLevel(windSpeed);
+        visibilityEl.textContent = `${(visibility / 1000).toFixed(1)} km`;
         locationInput.value = cityName;
-
-        const now = new Date();
-        updateTimeEl.textContent = `更新 ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
 
         setWeather(code);
       } catch (e) {
-        showError('定位获取天气失败');
+        showError('Failed to get weather');
       }
-
       locateBtn.textContent = '📍';
       locateBtn.style.opacity = '1';
     },
-    (_err) => {
-      showError('定位失败，请检查权限');
+    () => {
+      showError('Location failed');
       locateBtn.textContent = '📍';
       locateBtn.style.opacity = '1';
     },
@@ -1037,29 +978,11 @@ function getCurrentLocation() {
 }
 
 // ============ 启动 ============
-
-// 预初始化粒子效果（防止加载时空白）
-function preInitParticles() {
-  if (!canvas.width || !canvas.height) {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-  // 默认晴天粒子效果
-  currentWeather = 'sunny';
-  initWeather('sunny');
-  console.log('[Weather] Pre-initialized with sunny particles:', particles.length);
-}
-
-// 启动动画循环
 draw();
+currentWeather = 'sunny';
+initWeather('sunny');
+fetchWeather('Beijing');
 
-// 预初始化粒子避免空白
-preInitParticles();
-
-// 默认加载天气
-fetchWeather('北京');
-
-// 搜索功能
 searchBtn.addEventListener('click', () => {
   const loc = locationInput.value.trim();
   if (loc) fetchWeather(loc);
@@ -1072,49 +995,33 @@ locationInput.addEventListener('keydown', e => {
   }
 });
 
-// GPS 定位
 locateBtn.addEventListener('click', getCurrentLocation);
 
-// 朗读按钮
 speakBtn.addEventListener('click', () => {
-  const city = cityEl.textContent;
-  const temp = tempEl.textContent;
-  const desc = descEl.textContent;
-  const mood = moodText.textContent;
-
-  if (city === '--') {
-    showError('先获取天气再朗读');
+  if (cityEl.textContent === '--') {
+    showError('Get weather first');
     return;
   }
-
-  const text = `In ${city}, it is ${desc}, ${temp}. ${mood}`;
-
-  // 如果正在朗读，就停止
   if (window.speechSynthesis.speaking) {
     window.speechSynthesis.cancel();
     speakBtn.textContent = '🔊';
   } else {
-    speak(text);
+    announceWeather();
     speakBtn.textContent = '🔇';
-    // 朗读结束时恢复图标
-    window.speechSynthesis.onend = () => {
-      speakBtn.textContent = '🔊';
-    };
+    window.speechSynthesis.onend = () => { speakBtn.textContent = '🔊'; };
   }
 });
 
-// 刷新天气按钮
 refreshBtn.addEventListener('click', () => {
-  const city = locationInput.value.trim() || '北京';
+  const city = locationInput.value.trim() || 'Beijing';
   refreshBtn.classList.add('spinning');
   fetchWeather(city).finally(() => {
     setTimeout(() => refreshBtn.classList.remove('spinning'), 500);
   });
 });
 
-// Service Worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js')
     .then(() => console.log('SW registered'))
-    .catch((err) => console.log('SW registration failed:', err));
+    .catch((err) => console.log('SW failed:', err));
 }
