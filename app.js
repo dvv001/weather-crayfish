@@ -40,15 +40,15 @@ function speak(text) {
   window.speechSynthesis.cancel();
 
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'zh-CN';
-  utterance.rate = 1.1;
-  utterance.pitch = 1.2;
+  utterance.lang = 'en-US';
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
 
-  // 尝试找中文语音
+  // 尝试找英文语音
   const voices = window.speechSynthesis.getVoices();
-  const zhVoice = voices.find(v => v.lang.includes('zh'));
-  if (zhVoice) {
-    utterance.voice = zhVoice;
+  const enVoice = voices.find(v => v.lang.includes('en'));
+  if (enVoice) {
+    utterance.voice = enVoice;
   }
 
   window.speechSynthesis.speak(utterance);
@@ -62,7 +62,7 @@ function announceWeather() {
   const desc = descEl.textContent;
   const mood = moodText.textContent;
 
-  const text = `${city}，现在${desc}，气温${temp}。${mood}`;
+  const text = `In ${city}, it is ${desc}, ${temp}. ${mood}`;
   speak(text);
 }
 
@@ -78,6 +78,7 @@ if ('speechSynthesis' in window) {
 function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
+  console.log('[Canvas] Resized to:', canvas.width, 'x', canvas.height);
 }
 window.addEventListener('resize', resize);
 resize();
@@ -143,6 +144,8 @@ async function fetchWeather(location) {
     showError('网络开小差了，等会再试~');
     isLoading = false;
     showLoading(false);
+    // API 失败时设置默认天气，确保背景有效果
+    setWeather(0);
     return false;
   }
 }
@@ -265,57 +268,57 @@ function getSpeech(type) {
 function getSlogans(type) {
   const map = {
     rain: [
-      '雨好大，像依萍去找她爸要钱那天一样',
-      '这雨下得比我减肥的决心还大',
-      '下雨天和睡觉最配了，别的都不行',
-      '撑伞走在雨中，我就是这条街最靓的虾',
-      '雨：我不针对谁，在座各位都得湿'
+      'The rain is pouring down like crazy',
+      'This rain is heavier than my diet resolve',
+      'Rainy days are perfect for sleeping',
+      'Walking in the rain with my umbrella',
+      'Rain: soaking everyone equally'
     ],
     thunder: [
-      '这雷声，开最大声都盖不住',
-      '谁在渡劫！等等我不是妖精啊',
-      '怕怕！抱紧我的小被子先',
-      '男朋友都可以不要，雷必须躲',
-      '躲被窝里就安全了…吧？'
+      'The thunder is so loud even max volume won\'t cover it',
+      'Someone is渡劫! Wait, I\'m not a monster...',
+      'So scared! Hiding under my blanket',
+      'Boyfriends can go, but not thunder',
+      'Am I safe hiding under the covers?'
     ],
     snow: [
-      '下雪好浪漫，除了出门的时候',
-      '堆个雪人不难，难的是堆一个像我的',
-      '雪花飘呀飘，本虾在发呆',
-      '冷到打字都在颤抖，伸手都是冒险',
-      '下雪不冷化雪冷，这话谁说的站出来'
+      'Snow is romantic, except when going outside',
+      'Building a snowman isn\'t hard, making one that looks like me is',
+      'Snowflakes falling, this crayfish is spacing out',
+      'So cold my fingers are shaking',
+      'Snow isn\'t cold, melting snow is cold'
     ],
     sunny: [
-      '今天天气好炸了，心情也跟着炸',
-      '阳光治愈一切，不接受反驳',
-      '出门被晒化，不出门被懒化',
-      '阳光余额充足，请放心使用',
-      '这太阳，晒被子第一名'
+      'The weather is amazing today, mood is boosted',
+      'Sunshine heals everything',
+      'Get roasted by the sun or roasted by laziness at home',
+      'Sunshine energy is fully charged',
+      'Perfect weather for drying blankets'
     ],
     cloudy: [
-      '心情像天气一样，阴晴不定…',
-      '没有阳光的日子，连影子都是灰的',
-      '阴天嘛，适合发呆和想太多',
-      '天上云层厚，本虾emo了',
-      '今天的我：想躺、想宅、想摸鱼'
+      'My mood is as unpredictable as the weather...',
+      'Even my shadow is gray without sunshine',
+      'Cloudy days are for daydreaming',
+      'The clouds are thick, this crayfish feels blue',
+      'Today I want to lie flat, stay home, and slack off'
     ],
     fog: [
-      '前方白茫茫，什么都看不清…',
-      '这雾浓得，连虾的眼睛都不亮了',
-      '在雾里走着走着就…迷路了',
-      '伸手不见五指，本虾怕怕',
-      '这雾，滤镜都省了'
+      'Everything is white, can\'t see a thing...',
+      'The fog is so thick, even my crayfish eyes can\'t shine',
+      'Walking in the fog and getting... lost',
+      'Can\'t see my hand in front of my face',
+      'The fog is like a free filter'
     ],
     'clear-night': [
-      '星星好多，夜深了虾也困了',
-      '晚安世界，晚安虾虾',
-      '今晚月色真美，风也温柔',
-      '睡个好觉，明天继续元气满满',
-      '星星眨眼睛，像在说晚安'
+      'So many stars, this crayfish is sleepy',
+      'Good night world, good night crayfish',
+      'The moonlight is beautiful tonight',
+      'Sleep well, stay energetic tomorrow',
+      'Stars twinkling like saying goodnight'
     ]
   };
 
-  const arr = map[type] || ['感受天气中...'];
+  const arr = map[type] || ['Feeling the weather...'];
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
@@ -353,6 +356,12 @@ function showProps(type) {
 function initWeather(type) {
   particles = [];
 
+  // 确保 canvas 尺寸已设置
+  if (!canvas.width || !canvas.height) {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
   switch (type) {
     case 'rain': initRain(); break;
     case 'thunder': initThunder(); break;
@@ -361,8 +370,10 @@ function initWeather(type) {
     case 'cloudy': initCloudy(); break;
     case 'fog': initFog(); break;
     case 'clear-night': initClearNight(); break;
-    default: break;
+    default: initSunny(); break;
   }
+
+  console.log(`[Weather] ${type} particles initialized:`, particles.length);
 }
 
 function initRain() {
@@ -370,9 +381,10 @@ function initRain() {
     particles.push({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      speed: 10 + Math.random() * 10,
-      length: 15 + Math.random() * 25,
-      opacity: 0.3 + Math.random() * 0.4
+      speed: 8 + Math.random() * 8,
+      length: 15 + Math.random() * 20,
+      opacity: 0.3 + Math.random() * 0.4,
+      hue: 200 + Math.random() * 30
     });
   }
 }
@@ -382,82 +394,98 @@ function initThunder() {
     particles.push({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      speed: 14 + Math.random() * 14,
-      length: 20 + Math.random() * 35,
-      opacity: 0.4 + Math.random() * 0.4
+      speed: 12 + Math.random() * 12,
+      length: 20 + Math.random() * 30,
+      opacity: 0.4 + Math.random() * 0.4,
+      hue: 260 + Math.random() * 40
     });
   }
 }
 
 function initSnow() {
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 120; i++) {
     particles.push({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      speed: 1 + Math.random() * 2.5,
-      radius: 2 + Math.random() * 5,
+      speed: 1 + Math.random() * 2,
+      radius: 2 + Math.random() * 4,
       wobble: Math.random() * Math.PI * 2,
-      opacity: 0.5 + Math.random() * 0.5
+      opacity: 0.5 + Math.random() * 0.4,
+      hue: 190 + Math.random() * 20
     });
   }
 }
 
 function initSunny() {
-  for (let i = 0; i < 12; i++) {
+  // 太阳光线
+  for (let i = 0; i < 16; i++) {
     particles.push({
-      angle: (i / 12) * Math.PI * 2,
-      speed: 0.008,
-      rayLength: 80 + Math.random() * 50,
-      opacity: 0.15 + Math.random() * 0.1
+      angle: (i / 16) * Math.PI * 2,
+      speed: 0.006,
+      rayLength: 80 + Math.random() * 60,
+      opacity: 0.2 + Math.random() * 0.15
     });
   }
-  // 光晕粒子
-  for (let i = 0; i < 30; i++) {
+  // 光晕漂浮粒子
+  for (let i = 0; i < 50; i++) {
     particles.push({
       isGlow: true,
       angle: Math.random() * Math.PI * 2,
-      radius: 20 + Math.random() * 60,
-      speed: 0.02 + Math.random() * 0.02,
-      size: 2 + Math.random() * 4,
-      opacity: 0.3 + Math.random() * 0.4
+      radius: 30 + Math.random() * 80,
+      speed: 0.015 + Math.random() * 0.02,
+      size: 2 + Math.random() * 5,
+      opacity: 0.4 + Math.random() * 0.4
+    });
+  }
+  // 额外光尘
+  for (let i = 0; i < 30; i++) {
+    particles.push({
+      isDust: true,
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: 1 + Math.random() * 2,
+      speedX: (Math.random() - 0.5) * 0.5,
+      speedY: (Math.random() - 0.5) * 0.5,
+      opacity: 0.3 + Math.random() * 0.4,
+      life: Math.random() * 200
     });
   }
 }
 
 function initCloudy() {
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 20; i++) {
     particles.push({
-      x: Math.random() * canvas.width * 1.5,
-      y: 80 + Math.random() * 250,
-      width: 180 + Math.random() * 250,
-      height: 70 + Math.random() * 50,
-      speed: 0.25 + Math.random() * 0.35,
+      x: Math.random() * canvas.width * 1.5 - canvas.width * 0.25,
+      y: Math.random() * canvas.height,
+      width: 250 + Math.random() * 350,
+      height: 120 + Math.random() * 80,
+      speed: 0.2 + Math.random() * 0.3,
       opacity: 0.15 + Math.random() * 0.2
     });
   }
 }
 
 function initFog() {
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 50; i++) {
     particles.push({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
       radius: 100 + Math.random() * 200,
       speed: 0.35 + Math.random() * 0.35,
-      opacity: 0.06 + Math.random() * 0.08
+      opacity: 0.08 + Math.random() * 0.1
     });
   }
 }
 
 function initClearNight() {
-  for (let i = 0; i < 80; i++) {
+  for (let i = 0; i < 100; i++) {
     particles.push({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height * 0.7,
       radius: 0.5 + Math.random() * 2.5,
       twinkle: Math.random() * Math.PI * 2,
       speed: 0.025 + Math.random() * 0.035,
-      opacity: 0.3 + Math.random() * 0.7
+      opacity: 0.4 + Math.random() * 0.6
     });
   }
   // 月亮
@@ -469,12 +497,177 @@ function initClearNight() {
   });
 }
 
+// ============ 银河系背景 ============
+const galaxyStars = [];
+let galaxyTime = 0;
+
+function initGalaxy() {
+  for (let i = 0; i < 200; i++) {
+    galaxyStars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: 0.5 + Math.random() * 2,
+      speed: 0.2 + Math.random() * 0.5,
+      twinkle: Math.random() * Math.PI * 2,
+      twinkleSpeed: 0.02 + Math.random() * 0.03,
+      hue: 200 + Math.random() * 60 // 蓝色到紫色
+    });
+  }
+}
+initGalaxy();
+
+function drawGalaxy() {
+  galaxyTime += 0.01;
+
+  // 银河带渐变
+  ctx.save();
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+
+  // 旋转的银河光带
+  for (let r = Math.max(canvas.width, canvas.height); r > 0; r -= 50) {
+    const alpha = 0.02 + (1 - r / Math.max(canvas.width, canvas.height)) * 0.03;
+    const rotation = galaxyTime * 0.1;
+
+    ctx.globalAlpha = alpha;
+    const grad = ctx.createRadialGradient(
+      cx + Math.cos(rotation) * 50,
+      cy + Math.sin(rotation) * 50,
+      r * 0.3,
+      cx,
+      cy,
+      r
+    );
+    grad.addColorStop(0, 'rgba(100, 80, 150, 0.3)');
+    grad.addColorStop(0.5, 'rgba(60, 40, 100, 0.2)');
+    grad.addColorStop(1, 'rgba(20, 20, 50, 0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+  ctx.restore();
+
+  // 银河星星
+  galaxyStars.forEach(star => {
+    star.twinkle += star.twinkleSpeed;
+
+    const alpha = 0.3 + 0.5 * Math.abs(Math.sin(star.twinkle));
+    const size = star.size * (0.8 + 0.4 * Math.sin(star.twinkle));
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // 星星发光
+    const starGrad = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, size * 3);
+    starGrad.addColorStop(0, `hsla(${star.hue}, 80%, 90%, 1)`);
+    starGrad.addColorStop(0.3, `hsla(${star.hue}, 70%, 70%, 0.6)`);
+    starGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = starGrad;
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, size * 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 星星核心
+    ctx.fillStyle = `hsla(${star.hue}, 60%, 95%, 1)`;
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, size * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+
+    // 星星缓慢漂移
+    star.x += star.speed * 0.1;
+    if (star.x > canvas.width + 10) {
+      star.x = -10;
+      star.y = Math.random() * canvas.height;
+    }
+  });
+
+  // 流星
+  if (Math.random() < 0.003) {
+    drawShootingStar();
+  }
+}
+
+// 流星数据
+const shootingStars = [];
+
+function drawShootingStar() {
+  const startX = Math.random() * canvas.width;
+  const startY = Math.random() * canvas.height * 0.5;
+  shootingStars.push({
+    x: startX,
+    y: startY,
+    length: 80 + Math.random() * 60,
+    speed: 8 + Math.random() * 4,
+    angle: Math.PI * 0.25 + Math.random() * 0.1,
+    life: 1
+  });
+}
+
+function updateShootingStars() {
+  for (let i = shootingStars.length - 1; i >= 0; i--) {
+    const s = shootingStars[i];
+    s.x += Math.cos(s.angle) * s.speed;
+    s.y += Math.sin(s.angle) * s.speed;
+    s.life -= 0.02;
+
+    if (s.life <= 0 || s.x > canvas.width + 100 || s.y > canvas.height + 100) {
+      shootingStars.splice(i, 1);
+    }
+  }
+}
+
+function renderShootingStars() {
+  shootingStars.forEach(s => {
+    ctx.save();
+    ctx.globalAlpha = s.life;
+
+    const grad = ctx.createLinearGradient(
+      s.x, s.y,
+      s.x - Math.cos(s.angle) * s.length,
+      s.y - Math.sin(s.angle) * s.length
+    );
+    grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    grad.addColorStop(0.3, 'rgba(200, 220, 255, 0.8)');
+    grad.addColorStop(1, 'transparent');
+
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(s.x, s.y);
+    ctx.lineTo(s.x - Math.cos(s.angle) * s.length, s.y - Math.sin(s.angle) * s.length);
+    ctx.stroke();
+
+    // 流星头
+    ctx.fillStyle = '#fff';
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#fff';
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  });
+}
+
 // ============ 绘制 ============
 
 let thunderFlash = 0;
 
 function draw() {
+  // 确保 canvas 尺寸有效
+  if (!canvas.width || !canvas.height) {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // 银河系背景
+  drawGalaxy();
+  updateShootingStars();
+  renderShootingStars();
 
   switch (currentWeather) {
     case 'rain': drawRain(); break;
@@ -484,43 +677,65 @@ function draw() {
     case 'cloudy': drawCloudy(); break;
     case 'fog': drawFog(); break;
     case 'clear-night': drawClearNight(); break;
+    default: drawSunny(); break;
   }
 
   requestAnimationFrame(draw);
 }
 
 function drawRain() {
-  ctx.strokeStyle = 'rgba(174, 194, 224, 0.6)';
-  ctx.lineWidth = 1.5;
-
   particles.forEach(p => {
+    ctx.save();
     ctx.globalAlpha = p.opacity;
+
+    // 雨滴
+    ctx.strokeStyle = `hsla(${p.hue}, 70%, 70%, 0.8)`;
+    ctx.lineWidth = 1.5;
+    ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(p.x, p.y);
-    ctx.lineTo(p.x + 1.5, p.y + p.length);
+    ctx.lineTo(p.x + 2, p.y + p.length);
     ctx.stroke();
 
+    // 底部光点
+    ctx.fillStyle = `hsla(${p.hue}, 90%, 80%, 0.9)`;
+    ctx.beginPath();
+    ctx.arc(p.x + 2, p.y + p.length, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+
     p.y += p.speed;
-    p.x += 0.5;
+    p.x += 0.3;
     if (p.y > canvas.height) {
       p.y = -p.length;
       p.x = Math.random() * canvas.width;
     }
   });
-
   ctx.globalAlpha = 1;
 }
 
 function drawThunder() {
-  ctx.strokeStyle = 'rgba(120, 140, 200, 0.7)';
-  ctx.lineWidth = 1.5;
-
   particles.forEach(p => {
+    ctx.save();
     ctx.globalAlpha = p.opacity;
+
+    // 闪电
+    ctx.strokeStyle = `hsla(${p.hue}, 70%, 75%, 0.9)`;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(p.x, p.y);
-    ctx.lineTo(p.x + 1, p.y + p.length);
+    ctx.lineTo(p.x, p.y + p.length);
     ctx.stroke();
+
+    // 闪电头
+    ctx.fillStyle = `hsla(${p.hue}, 90%, 90%, 1)`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y + p.length, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
 
     p.y += p.speed;
     p.x += 0.3;
@@ -535,9 +750,11 @@ function drawThunder() {
     thunderFlash = 10;
   }
   if (thunderFlash > 0) {
-    ctx.globalAlpha = (thunderFlash / 10) * 0.25;
-    ctx.fillStyle = '#e8e8ff';
+    ctx.save();
+    ctx.globalAlpha = (thunderFlash / 10) * 0.2;
+    ctx.fillStyle = '#e0e0ff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
     thunderFlash--;
   }
 
@@ -546,14 +763,19 @@ function drawThunder() {
 
 function drawSnow() {
   particles.forEach(p => {
+    ctx.save();
     ctx.globalAlpha = p.opacity;
-    ctx.fillStyle = '#ffffff';
+
+    // 雪粒
+    ctx.fillStyle = `hsla(${p.hue}, 60%, 95%, 0.9)`;
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
     ctx.fill();
 
+    ctx.restore();
+
     p.wobble += 0.03;
-    p.x += Math.sin(p.wobble) * 0.8;
+    p.x += Math.sin(p.wobble) * 0.6;
     p.y += p.speed;
 
     if (p.y > canvas.height + 10) {
@@ -571,9 +793,9 @@ function drawSunny() {
 
   // 外层光晕
   const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR);
-  grad.addColorStop(0, 'rgba(255, 230, 120, 0.7)');
-  grad.addColorStop(0.3, 'rgba(255, 200, 80, 0.3)');
-  grad.addColorStop(0.7, 'rgba(255, 150, 50, 0.1)');
+  grad.addColorStop(0, 'rgba(255, 230, 120, 0.8)');
+  grad.addColorStop(0.3, 'rgba(255, 200, 80, 0.4)');
+  grad.addColorStop(0.7, 'rgba(255, 150, 50, 0.15)');
   grad.addColorStop(1, 'rgba(255, 100, 0, 0)');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -585,11 +807,36 @@ function drawSunny() {
       p.angle += p.speed;
       const gx = cx + Math.cos(p.angle) * p.radius;
       const gy = cy + Math.sin(p.angle) * p.radius;
+
+      ctx.save();
       ctx.globalAlpha = p.opacity;
-      ctx.fillStyle = 'rgba(255, 220, 100, 0.6)';
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = 'rgba(255, 220, 100, 0.8)';
+      ctx.fillStyle = 'rgba(255, 230, 120, 0.9)';
       ctx.beginPath();
       ctx.arc(gx, gy, p.size, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
+    } else if (p.isDust) {
+      // 光尘粒子
+      ctx.save();
+      ctx.globalAlpha = p.opacity;
+      ctx.shadowBlur = 6;
+      ctx.shadowColor = 'rgba(255, 255, 200, 0.6)';
+      ctx.fillStyle = 'rgba(255, 250, 200, 0.8)';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      p.x += p.speedX;
+      p.y += p.speedY;
+      p.life--;
+      if (p.life <= 0 || p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
+        p.x = Math.random() * canvas.width;
+        p.y = Math.random() * canvas.height;
+        p.life = 150 + Math.random() * 100;
+      }
     } else {
       // 射线
       p.angle += p.speed;
@@ -597,14 +844,19 @@ function drawSunny() {
       const outerY = cy + Math.sin(p.angle) * maxR * 0.85;
       const innerX = cx + Math.cos(p.angle) * (maxR * 0.35);
       const innerY = cy + Math.sin(p.angle) * (maxR * 0.35);
+
+      ctx.save();
       ctx.globalAlpha = p.opacity;
-      ctx.strokeStyle = 'rgba(255, 220, 100, 0.7)';
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = 'rgba(255, 220, 100, 0.5)';
+      ctx.strokeStyle = 'rgba(255, 220, 100, 0.85)';
       ctx.lineWidth = 3;
       ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.moveTo(innerX, innerY);
       ctx.lineTo(outerX, outerY);
       ctx.stroke();
+      ctx.restore();
     }
   });
 
@@ -612,22 +864,38 @@ function drawSunny() {
 }
 
 function drawCloudy() {
+  // 背景灰暗
+  ctx.save();
+  const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  bg.addColorStop(0, 'rgba(80, 90, 100, 0.4)');
+  bg.addColorStop(1, 'rgba(60, 70, 80, 0.3)');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
+
   particles.forEach(p => {
+    ctx.save();
     ctx.globalAlpha = p.opacity;
+
+    // 大面积云层
     const grad = ctx.createRadialGradient(
       p.x, p.y, 0,
-      p.x, p.y, p.width * 0.5
+      p.x, p.y, p.width * 0.6
     );
-    grad.addColorStop(0, 'rgba(180, 185, 200, 0.5)');
-    grad.addColorStop(1, 'rgba(140, 145, 160, 0)');
+    grad.addColorStop(0, 'rgba(120, 130, 145, 0.5)');
+    grad.addColorStop(0.4, 'rgba(100, 110, 125, 0.35)');
+    grad.addColorStop(0.7, 'rgba(80, 90, 105, 0.2)');
+    grad.addColorStop(1, 'rgba(60, 70, 85, 0)');
+
     ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.ellipse(p.x, p.y, p.width * 0.5, p.height * 0.4, 0, 0, Math.PI * 2);
+    ctx.ellipse(p.x, p.y, p.width * 0.6, p.height * 0.5, 0, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
 
     p.x += p.speed;
-    if (p.x > canvas.width + p.width) {
-      p.x = -p.width;
+    if (p.x > canvas.width + p.width * 0.5) {
+      p.x = -p.width * 0.6;
     }
   });
   ctx.globalAlpha = 1;
@@ -635,14 +903,21 @@ function drawCloudy() {
 
 function drawFog() {
   particles.forEach(p => {
+    ctx.save();
     ctx.globalAlpha = p.opacity;
+
+    ctx.shadowBlur = 30;
+    ctx.shadowColor = 'rgba(160, 165, 175, 0.4)';
+
     const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
-    grad.addColorStop(0, 'rgba(160, 165, 175, 0.3)');
-    grad.addColorStop(1, 'rgba(160, 165, 175, 0)');
+    grad.addColorStop(0, 'rgba(180, 185, 195, 0.4)');
+    grad.addColorStop(0.5, 'rgba(160, 165, 175, 0.2)');
+    grad.addColorStop(1, 'rgba(140, 145, 155, 0)');
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
 
     p.x += p.speed;
     if (p.x > canvas.width + p.radius) {
@@ -655,27 +930,38 @@ function drawFog() {
 function drawClearNight() {
   particles.forEach(p => {
     if (p.isMoon) {
-      // 月亮
-      ctx.globalAlpha = 0.9;
+      // 月亮发光效果
+      ctx.save();
+      ctx.shadowBlur = 40;
+      ctx.shadowColor = 'rgba(255, 255, 200, 0.5)';
+
+      ctx.globalAlpha = 0.95;
       const moonGrad = ctx.createRadialGradient(
         p.x - 10, p.y - 10, 0,
         p.x, p.y, p.radius
       );
-      moonGrad.addColorStop(0, 'rgba(255, 255, 230, 1)');
+      moonGrad.addColorStop(0, 'rgba(255, 255, 240, 1)');
+      moonGrad.addColorStop(0.5, 'rgba(255, 250, 220, 0.95)');
       moonGrad.addColorStop(0.8, 'rgba(255, 245, 200, 0.9)');
-      moonGrad.addColorStop(1, 'rgba(255, 230, 150, 0.7)');
+      moonGrad.addColorStop(1, 'rgba(255, 230, 180, 0.7)');
       ctx.fillStyle = moonGrad;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
     } else {
       p.twinkle += p.speed;
-      const alpha = p.opacity * (0.3 + 0.7 * Math.abs(Math.sin(p.twinkle)));
+      const alpha = p.opacity * (0.4 + 0.6 * Math.abs(Math.sin(p.twinkle)));
+
+      ctx.save();
       ctx.globalAlpha = alpha;
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = 'rgba(200, 220, 255, 0.8)';
       ctx.fillStyle = '#fff';
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
     }
   });
   ctx.globalAlpha = 1;
@@ -752,8 +1038,23 @@ function getCurrentLocation() {
 
 // ============ 启动 ============
 
+// 预初始化粒子效果（防止加载时空白）
+function preInitParticles() {
+  if (!canvas.width || !canvas.height) {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  // 默认晴天粒子效果
+  currentWeather = 'sunny';
+  initWeather('sunny');
+  console.log('[Weather] Pre-initialized with sunny particles:', particles.length);
+}
+
 // 启动动画循环
 draw();
+
+// 预初始化粒子避免空白
+preInitParticles();
 
 // 默认加载天气
 fetchWeather('北京');
@@ -786,7 +1087,7 @@ speakBtn.addEventListener('click', () => {
     return;
   }
 
-  const text = `${city}，现在${desc}，气温${temp}。${mood}`;
+  const text = `In ${city}, it is ${desc}, ${temp}. ${mood}`;
 
   // 如果正在朗读，就停止
   if (window.speechSynthesis.speaking) {
