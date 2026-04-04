@@ -1,6 +1,8 @@
 /* =============================================
-   虾天气 - Weather Crayfish PWA
+   虾天气 - 深空玻璃态 (Deep Space Glass)
    ============================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;700&display=swap');
 
 * {
   margin: 0;
@@ -10,37 +12,37 @@
 }
 
 :root {
-  --bg-default: #1a1a2e;
-  --bg-rain: #1a2a3a;
-  --bg-sunny: #4a90c2;
-  --bg-cloudy: #4a5568;
-  --bg-thunder: #2d2d4a;
-  --accent: #f39c12;
-  --pink: #ff69b4;
+  /* 深空主题 */
+  --bg-gradient-start: #1A1A2E;
+  --bg-gradient-end: #16213E;
+
+  /* 毛玻璃效果 */
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --glass-blur: 20px;
+
+  /* 文字 */
+  --text-primary: #FFFFFF;
+  --text-secondary: #B8C5D6;
+
+  /* 强调色 */
+  --accent: #FFB347;
+  --accent-blue: #5DADE2;
+  --accent-purple: #A29BFE;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
-  background: var(--bg-default);
-  color: #fff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+  background-attachment: fixed;
+  color: var(--text-primary);
   min-height: 100vh;
-  overflow: hidden;
-  transition: background 1.5s ease;
+  overflow-x: hidden;
 }
 
-#app {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  overflow: hidden;
-}
-
-/* ===== 天气画布 ===== */
+/* ===== 全屏天气动效背景 ===== */
 #weatherCanvas {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
@@ -48,174 +50,296 @@ body {
   z-index: 0;
 }
 
+/* ===== 主容器 ===== */
+#app {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== 毛玻璃卡片 ===== */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+}
+
 /* ===== 定位栏 ===== */
 .location-bar {
-  position: relative;
-  z-index: 10;
-  margin-top: 30px;
   display: flex;
   align-items: center;
-  background: rgba(255,255,255,0.12);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 30px;
-  padding: 8px 8px 8px 16px;
-  border: 1px solid rgba(255,255,255,0.15);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: 40px;
+  margin-bottom: 20px;
 }
 
 .location-bar input {
+  flex: 1;
   background: transparent;
   border: none;
   outline: none;
-  color: #fff;
-  font-size: 16px;
-  width: 160px;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-family: 'Inter', sans-serif;
 }
 
 .location-bar input::placeholder {
-  color: rgba(255,255,255,0.5);
+  color: var(--text-secondary);
+  opacity: 0.7;
 }
 
 .location-bar button {
   background: var(--accent);
   border: none;
   border-radius: 50%;
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   font-size: 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s;
+  transition: transform 0.2s, opacity 0.2s;
 }
 
 .location-bar button:active {
   transform: scale(0.92);
 }
 
-#locateBtn {
-  background: rgba(255,255,255,0.15);
-  border: none;
-  border-radius: 50%;
-  width: 38px;
-  height: 38px;
+.location-bar button.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  width: 40px;
+  height: 40px;
   font-size: 18px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
 }
 
-#locateBtn:hover {
-  background: rgba(255,255,255,0.25);
+.location-bar button.secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
-#speakBtn {
-  background: rgba(255,255,255,0.15);
-  border: none;
-  border-radius: 50%;
-  width: 38px;
-  height: 38px;
-  font-size: 18px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-#speakBtn:hover {
-  background: rgba(255,255,255,0.25);
-}
-
-#speakBtn:active {
-  transform: scale(0.92);
-}
-
-#refreshBtn {
-  background: rgba(255,255,255,0.15);
-  border: none;
-  border-radius: 50%;
-  width: 38px;
-  height: 38px;
-  font-size: 18px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-#refreshBtn:hover {
-  background: rgba(255,255,255,0.25);
-}
-
-#refreshBtn:active {
-  transform: scale(0.92);
-}
-
-#refreshBtn.spinning {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* ===== 天气信息 ===== */
-.weather-info {
-  position: relative;
-  z-index: 10;
+/* ===== 天气主卡片 ===== */
+.weather-main {
+  padding: 32px 28px;
+  margin-bottom: 20px;
   text-align: center;
-  margin-top: 16px;
 }
 
-.temp {
-  font-size: 80px;
-  font-weight: 200;
-  line-height: 1;
-  text-shadow: 0 2px 20px rgba(0,0,0,0.3);
-}
-
-.desc {
-  font-size: 20px;
-  margin-top: 4px;
-  opacity: 0.85;
-}
-
-.city {
+.weather-main .location {
   font-size: 14px;
-  margin-top: 6px;
-  opacity: 0.6;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.weather-main .temperature {
+  font-family: 'Oswald', sans-serif;
+  font-size: 96px;
+  font-weight: 700;
+  letter-spacing: -4px;
+  line-height: 1;
+  margin-bottom: 4px;
+  background: linear-gradient(180deg, #fff 0%, #B8C5D6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.weather-main .feels-like {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.weather-main .weather-desc {
+  font-size: 20px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.weather-main .weather-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+/* ===== 数据网格 ===== */
+.data-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.data-item {
+  padding: 16px 12px;
+  text-align: center;
+}
+
+.data-item .data-value {
+  font-family: 'Oswald', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.data-item .data-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ===== 小时预报 ===== */
+.hourly-section {
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  padding-left: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.hourly-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 16px 4px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.hourly-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.hourly-item {
+  flex-shrink: 0;
+  width: 60px;
+  padding: 14px 8px;
+  text-align: center;
+  scroll-snap-align: start;
+  border-radius: 16px;
+}
+
+.hourly-item .time {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.hourly-item .icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.hourly-item .temp {
+  font-family: 'Oswald', sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+/* ===== 7日预报 ===== */
+.daily-section {
+  margin-bottom: 20px;
+}
+
+.daily-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.daily-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 16px;
+}
+
+.daily-item .day {
+  width: 70px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.daily-item .icon {
+  font-size: 22px;
+  margin-right: 16px;
+}
+
+.daily-item .desc {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.daily-item .temps {
+  font-family: 'Oswald', sans-serif;
+  font-size: 16px;
+}
+
+.daily-item .temps .high {
+  font-weight: 600;
+}
+
+.daily-item .temps .low {
+  color: var(--text-secondary);
+  margin-left: 8px;
 }
 
 /* ===== 角色区域 ===== */
-.character {
-  position: relative;
-  z-index: 10;
+.character-area {
   margin-top: auto;
-  margin-bottom: 60px;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  animation: charFloat 3s ease-in-out infinite;
+  justify-content: center;
+  padding: 20px 0;
+  position: relative;
 }
 
-@keyframes charFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-12px); }
+.character {
+  position: relative;
+  animation: charFlyIn 1.5s ease-out forwards, charWalk 4s ease-in-out 1.5s infinite;
+  transform: translateX(-100vw);
+  opacity: 0;
+}
+
+@keyframes charFlyIn {
+  0% {
+    transform: translateX(-100vw) translateY(-30vh) rotate(-20deg);
+    opacity: 0;
+  }
+  30% { opacity: 1; }
+  100% {
+    transform: translateX(0) translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes charWalk {
+  0%, 100% { transform: translateX(-40px) rotate(-3deg); }
+  50% { transform: translateX(40px) rotate(3deg); }
 }
 
 .char-img {
-  width: 200px;
-  height: 200px;
+  width: 160px;
+  height: 160px;
   object-fit: contain;
-  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
-  transition: transform 0.3s;
+  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.4));
 }
 
 /* ===== 道具 ===== */
@@ -224,45 +348,33 @@ body {
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 220px;
-  height: 220px;
+  width: 180px;
+  height: 180px;
   pointer-events: none;
 }
 
 .prop {
   position: absolute;
-  font-size: 42px;
+  font-size: 36px;
   opacity: 0;
   transform: scale(0) rotate(-20deg);
   transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
 }
 
-/* 雨伞 - 右边 */
-.prop-rain { top: 10px; right: -20px; }
-
-/* 防晒霜 - 左边 */
-.prop-sunscreen { top: 20px; left: -15px; }
-
-/* 雷暴害怕 - 头顶 */
-.prop-thunder { top: -20px; left: 50%; transform: translateX(-50%) scale(0) rotate(0deg); font-size: 50px; }
-
-/* 雪/冷 - 右边 */
-.prop-snow { top: 30px; right: -10px; }
-
-/* 眼泪 - 左边 */
-.prop-tear { top: 60px; left: -20px; }
-
-/* 太阳镜 - 头顶 */
-.prop-sunglasses { top: -15px; left: 50%; transform: translateX(-50%) scale(0); }
+.prop-rain { top: 10px; right: -15px; }
+.prop-sunscreen { top: 15px; left: -10px; }
+.prop-thunder { top: -15px; left: 50%; transform: translateX(-50%) scale(0) rotate(0deg); font-size: 42px; }
+.prop-snow { top: 25px; right: -5px; }
+.prop-tear { top: 50px; left: -15px; }
+.prop-sunglasses { top: -10px; left: 50%; transform: translateX(-50%) scale(0); }
 
 /* ===== 语音气泡 ===== */
 .speech-bubble {
   position: absolute;
-  bottom: -20px;
+  bottom: -10px;
   left: 50%;
   transform: translateX(-50%) scale(0);
-  background: rgba(255,255,255,0.95);
+  background: rgba(255, 255, 255, 0.95);
   color: #333;
   padding: 6px 14px;
   border-radius: 16px;
@@ -270,7 +382,7 @@ body {
   white-space: nowrap;
   opacity: 0;
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .speech-bubble::after {
@@ -280,19 +392,37 @@ body {
   left: 50%;
   transform: translateX(-50%);
   border: 6px solid transparent;
-  border-bottom-color: rgba(255,255,255,0.95);
+  border-bottom-color: rgba(255, 255, 255, 0.95);
 }
 
 .speech-bubble.show {
   opacity: 1;
   transform: translateX(-50%) scale(1);
-  bottom: -30px;
+  bottom: -20px;
+}
+
+/* ===== 心情文字 ===== */
+.mood-text {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  font-size: 14px;
+  color: var(--accent-purple);
+  text-align: center;
+  padding: 10px 24px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  white-space: nowrap;
+  text-shadow: 0 0 10px rgba(162, 155, 254, 0.5);
 }
 
 /* ===== 天气状态动画 ===== */
-
-/* 雨天 */
-body.bg-rain .character { animation: charFloat 3s ease-in-out infinite, rainShake 2s ease-in-out infinite; }
+body.bg-rain .character { animation: charFlyIn 1.5s ease-out forwards, rainShake 2s ease-in-out 1.5s infinite; }
 body.bg-rain .prop-rain { opacity: 1; transform: scale(1) rotate(15deg); }
 body.bg-rain .char-img { transform: rotate(-5deg) scale(1.05); }
 
@@ -302,10 +432,9 @@ body.bg-rain .char-img { transform: rotate(-5deg) scale(1.05); }
   60% { transform: translateY(0) rotate(3deg); }
 }
 
-/* 雷暴 */
-body.bg-thunder .character { animation: thunderShake 0.4s ease-in-out infinite; }
+body.bg-thunder .character { animation: charFlyIn 1.5s ease-out forwards, thunderShake 0.4s ease-in-out 1.5s infinite; }
 body.bg-thunder .prop-thunder { opacity: 1; transform: translateX(-50%) scale(1); }
-body.bg-thunder .char-img { filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4)) brightness(0.9); }
+body.bg-thunder .char-img { filter: brightness(0.9); }
 
 @keyframes thunderShake {
   0%, 100% { transform: translateX(0) rotate(0); }
@@ -315,21 +444,17 @@ body.bg-thunder .char-img { filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4)) bri
   80% { transform: translateX(8px) rotate(3deg); }
 }
 
-/* 晴天 */
-body.bg-sunny .character { animation: sunnyBounce 1.5s ease-in-out infinite; }
+body.bg-sunny .character { animation: charFlyIn 1.5s ease-out forwards, sunnyBounce 1.5s ease-in-out 1.5s infinite; }
 body.bg-sunny .prop-sunscreen { opacity: 1; transform: scale(1) rotate(-10deg); }
 body.bg-sunny .prop-sunglasses { opacity: 1; transform: translateX(-50%) scale(1); }
-body.bg-sunny .char-img { filter: drop-shadow(0 10px 20px rgba(255,180,0,0.3)) saturate(1.2); }
 
 @keyframes sunnyBounce {
   0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-18px) scale(1.08); }
+  50% { transform: translateY(-15px) scale(1.05); }
 }
 
-/* 阴天 */
-body.bg-cloudy .character { animation: cloudySway 4s ease-in-out infinite; }
+body.bg-cloudy .character { animation: charFlyIn 1.5s ease-out forwards, cloudySway 4s ease-in-out 1.5s infinite; }
 body.bg-cloudy .prop-tear { opacity: 1; transform: scale(1); animation: tearDrop 2s ease-in-out infinite; }
-body.bg-cloudy .char-img { filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4)) saturate(0.7); }
 
 @keyframes cloudySway {
   0%, 100% { transform: translateX(0); }
@@ -342,10 +467,8 @@ body.bg-cloudy .char-img { filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4)) satu
   30% { transform: scale(1.2) translateY(5px); }
 }
 
-/* 雪天 */
-body.bg-snow .character { animation: coldShiver 0.8s ease-in-out infinite; }
+body.bg-snow .character { animation: charFlyIn 1.5s ease-out forwards, coldShiver 0.8s ease-in-out 1.5s infinite; }
 body.bg-snow .prop-snow { opacity: 1; transform: scale(1) rotate(10deg); }
-body.bg-snow .char-img { filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4)) brightness(0.9) saturate(0.8); }
 
 @keyframes coldShiver {
   0%, 100% { transform: translateX(0) rotate(0); }
@@ -353,62 +476,21 @@ body.bg-snow .char-img { filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4)) bright
   75% { transform: translateX(3px) rotate(2deg); }
 }
 
-/* 雾天 */
-body.bg-fog .character { animation: fogFade 3s ease-in-out infinite; }
-body.bg-fog .char-img { filter: blur(2px) drop-shadow(0 10px 20px rgba(0,0,0,0.2)); opacity: 0.7; }
+body.bg-fog .character { animation: charFlyIn 1.5s ease-out forwards, fogFade 3s ease-in-out 1.5s infinite; }
+body.bg-fog .char-img { filter: blur(2px); opacity: 0.7; }
 
 @keyframes fogFade {
   0%, 100% { opacity: 0.7; transform: translateY(0); }
   50% { opacity: 0.5; transform: translateY(-5px); }
 }
 
-/* 夜晚 */
-body.bg-clear-night .character { animation: nightGlow 4s ease-in-out infinite; }
-body.bg-clear-night .char-img { filter: drop-shadow(0 10px 20px rgba(100,100,255,0.3)) brightness(0.85); }
+body.bg-clear-night .character { animation: charFlyIn 1.5s ease-out forwards, nightGlow 4s ease-in-out 1.5s infinite; }
+body.bg-clear-night .char-img { filter: brightness(0.85); }
 
 @keyframes nightGlow {
   0%, 100% { transform: translateY(0) scale(1); }
   50% { transform: translateY(-8px) scale(1.03); }
 }
-
-/* ===== 心情文字 ===== */
-.mood-text {
-  position: fixed;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 20;
-  font-size: 16px;
-  color: var(--pink);
-  text-align: center;
-  padding: 10px 24px;
-  background: rgba(0,0,0,0.4);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 20px;
-  white-space: nowrap;
-  transition: all 0.5s;
-  text-shadow: 0 0 10px rgba(255, 105, 180, 0.5);
-}
-
-/* ===== 更新时间 ===== */
-.update-time {
-  position: fixed;
-  bottom: 8px;
-  right: 12px;
-  font-size: 11px;
-  opacity: 0.4;
-  z-index: 20;
-}
-
-/* ===== 背景主题 ===== */
-body.bg-rain { background: linear-gradient(180deg, #1a2a3a 0%, #0d1b2a 100%); }
-body.bg-sunny { background: linear-gradient(180deg, #4a90c2 0%, #f39c12 100%); }
-body.bg-cloudy { background: linear-gradient(180deg, #4a5568 0%, #2d3748 100%); }
-body.bg-clear-night { background: linear-gradient(180deg, #1a1a2e 0%, #2d2d5a 100%); }
-body.bg-thunder { background: linear-gradient(180deg, #2d2d4a 0%, #1a1a2e 100%); }
-body.bg-snow { background: linear-gradient(180deg, #e8f0f8 0%, #c9d6e3 100%); color: #333; }
-body.bg-fog { background: linear-gradient(180deg, #6b7280 0%, #4b5563 100%); }
 
 /* ===== 错误提示 ===== */
 .error-msg {
@@ -417,7 +499,7 @@ body.bg-fog { background: linear-gradient(180deg, #6b7280 0%, #4b5563 100%); }
   left: 50%;
   transform: translateX(-50%);
   background: rgba(231, 76, 60, 0.9);
-  padding: 8px 20px;
+  padding: 10px 24px;
   border-radius: 20px;
   font-size: 14px;
   z-index: 100;
@@ -431,9 +513,28 @@ body.bg-fog { background: linear-gradient(180deg, #6b7280 0%, #4b5563 100%); }
   100% { opacity: 0; }
 }
 
-/* ===== 雪天文字反色 ===== */
-body.bg-snow .temp,
-body.bg-snow .desc,
-body.bg-snow .city {
-  color: #333;
+/* ===== 刷新动画 ===== */
+#refreshBtn.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 380px) {
+  .weather-main .temperature {
+    font-size: 80px;
+  }
+
+  .data-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .char-img {
+    width: 130px;
+    height: 130px;
+  }
 }

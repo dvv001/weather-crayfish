@@ -2,7 +2,7 @@
   "name": "虾天气",
   "short_name": "虾天气",
   "description": "可爱小龙虾天气主播，带你感受每一天的天气",
-  "start_url": "/weather-crayfish/",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#1a1a2e",
   "theme_color": "#1a1a2e",

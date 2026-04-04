@@ -3,60 +3,95 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#1a1a2e">
+  <meta name="theme-color" content="#1A1A2E">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>虾天气</title>
+  <title>虾天气 WeatherCosmos</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="app">
-    <!-- 天气场景画布 -->
+    <!-- 全屏天气动效背景 -->
     <canvas id="weatherCanvas"></canvas>
 
-    <!-- 定位输入 -->
+    <!-- 定位搜索栏 -->
     <div class="location-bar">
-      <button id="locateBtn" title="获取当前位置">📍</button>
-      <button id="speakBtn" title="朗读天气">🔊</button>
-      <button id="refreshBtn" title="刷新天气">🔄</button>
-      <input type="text" id="locationInput" placeholder="输入城市名，如 北京" value="北京">
+      <button id="locateBtn" class="secondary" title="获取当前位置">📍</button>
+      <button id="speakBtn" class="secondary" title="朗读天气">🔊</button>
+      <button id="refreshBtn" class="secondary" title="刷新天气">🔄</button>
+      <input type="text" id="locationInput" placeholder="输入城市名，如 Beijing" value="Beijing">
       <button id="searchBtn">🔍</button>
     </div>
 
-    <!-- 天气信息 -->
-    <div class="weather-info">
-      <div class="temp" id="temp">--°</div>
-      <div class="desc" id="desc">--</div>
-      <div class="city" id="city">--</div>
+    <!-- 天气主卡片 -->
+    <div class="weather-main glass-card">
+      <div class="location" id="city">--</div>
+      <div class="weather-icon" id="weatherIcon">🌤️</div>
+      <div class="temperature" id="temp">--°</div>
+      <div class="feels-like" id="feelsLike">Feels like --°</div>
+      <div class="weather-desc" id="desc">--</div>
+    </div>
+
+    <!-- 数据网格 -->
+    <div class="data-grid">
+      <div class="data-item glass-card">
+        <div class="data-value" id="humidity">--%</div>
+        <div class="data-label">Humidity</div>
+      </div>
+      <div class="data-item glass-card">
+        <div class="data-value" id="wind">--</div>
+        <div class="data-label">Wind</div>
+      </div>
+      <div class="data-item glass-card">
+        <div class="data-value" id="uv">--</div>
+        <div class="data-label">UV Index</div>
+      </div>
+      <div class="data-item glass-card">
+        <div class="data-value" id="visibility">--</div>
+        <div class="data-label">Visibility</div>
+      </div>
+    </div>
+
+    <!-- 小时预报 -->
+    <div class="hourly-section">
+      <div class="section-title">Hourly Forecast</div>
+      <div class="hourly-scroll glass-card" id="hourlyScroll">
+        <!-- JS 动态填充 -->
+      </div>
+    </div>
+
+    <!-- 7日预报 -->
+    <div class="daily-section">
+      <div class="section-title">7-Day Forecast</div>
+      <div class="daily-list glass-card" id="dailyList">
+        <!-- JS 动态填充 -->
+      </div>
     </div>
 
     <!-- 角色区域 -->
-    <div class="character" id="character">
-      <!-- 主角色图 -->
-      <img class="char-img" id="charImg" src="icon-192.png" alt="">
+    <div class="character-area">
+      <div class="character" id="character">
+        <img class="char-img" id="charImg" src="icon-192.png" alt="">
 
-      <!-- 天气道具层 -->
-      <div class="char-props" id="charProps">
-        <span class="prop prop-rain" id="propRain">☂️</span>
-        <span class="prop prop-sunscreen" id="propSunscreen">🧴</span>
-        <span class="prop prop-thunder" id="propThunder">😨</span>
-        <span class="prop prop-snow" id="propSnow">❄️</span>
-        <span class="prop prop-tear" id="propTear">💧</span>
-        <span class="prop prop-sunglasses" id="propSunglasses">🕶️</span>
+        <div class="char-props" id="charProps">
+          <span class="prop prop-rain" id="propRain">☂️</span>
+          <span class="prop prop-sunscreen" id="propSunscreen">🧴</span>
+          <span class="prop prop-thunder" id="propThunder">😨</span>
+          <span class="prop prop-snow" id="propSnow">❄️</span>
+          <span class="prop prop-tear" id="propTear">💧</span>
+          <span class="prop prop-sunglasses" id="propSunglasses">🕶️</span>
+        </div>
+
+        <div class="speech-bubble" id="speechBubble"></div>
       </div>
-
-      <!-- 表情气泡 -->
-      <div class="speech-bubble" id="speechBubble"></div>
     </div>
-
-    <!-- 心情文字 -->
-    <div class="mood-text" id="moodText">正在感受天气中...</div>
-
-    <!-- 更新时间 -->
-    <div class="update-time" id="updateTime"></div>
   </div>
+
+  <!-- 心情文字 -->
+  <div class="mood-text" id="moodText">Loading weather...</div>
 
   <script src="app.js"></script>
 </body>
